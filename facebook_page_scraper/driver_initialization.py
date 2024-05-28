@@ -52,7 +52,7 @@ class Initializer:
                     'no_proxy': 'localhost, 127.0.0.1'
                 }
                 logger.info("Using: {}".format(self.proxy))
-                return webdriver.Chrome(executable_path=ChromeDriverManager().install(),
+                return webdriver.Chrome(#executable_path=ChromeDriverManager().install(), # Automatic
                                         options=self.set_properties(browser_option), seleniumwire_options=options)
 
             return webdriver.Chrome(executable_path=ChromeDriverManager().install(), options=self.set_properties(browser_option))
@@ -65,7 +65,7 @@ class Initializer:
                     'no_proxy': 'localhost, 127.0.0.1'
                 }
                 logger.info("Using: {}".format(self.proxy))
-                return webdriver.Firefox(executable_path=GeckoDriverManager().install(),
+                return webdriver.Firefox(#executable_path=GeckoDriverManager().install(), # Automatic
                                          options=self.set_properties(browser_option), seleniumwire_options=options)
 
             # automatically installs geckodriver and initialize it and returns the instance
