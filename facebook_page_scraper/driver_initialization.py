@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+from typing import List
 
 from seleniumwire import webdriver
 # to add capabilities for chrome and firefox, import their Options with different aliases
@@ -8,6 +9,8 @@ from selenium.webdriver.firefox.options import Options as FirefoxOptions
 from webdriver_manager.chrome import ChromeDriverManager
 from webdriver_manager.firefox import GeckoDriverManager
 import logging
+
+from facebook_page_scraper.proxy_ext import BrowserExtension
 
 logger = logging.getLogger(__name__)
 format = logging.Formatter(
@@ -19,10 +22,11 @@ logger.addHandler(ch)
 
 class Initializer:
 
-    def __init__(self, browser_name, proxy=None, headless=True):
+    def __init__(self, browser_name, proxy=None, headless=True, browser_extensions: List[BrowserExtension] = []):
         self.browser_name = browser_name
         self.proxy = proxy
         self.headless = headless
+        self.browser_extensions = browser_extensions
 
     def set_properties(self, browser_option):
         """adds capabilities to the driver"""
@@ -36,6 +40,10 @@ class Initializer:
         browser_option.add_argument('--log-level=3')
         browser_option.add_argument('--disable-notifications')
         browser_option.add_argument('--disable-popup-blocking')
+
+        for ext in self.browser_extensions:
+            browser_option.add_extension(ext())
+
         return browser_option
 
     def set_driver_for_browser(self, browser_name):

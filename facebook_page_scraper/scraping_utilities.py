@@ -14,6 +14,7 @@ ch = logging.StreamHandler()
 ch.setFormatter(format)
 logger.addHandler(ch)
 
+
 class Scraping_utilities:
     @staticmethod
     def __extract_numbers(string):
