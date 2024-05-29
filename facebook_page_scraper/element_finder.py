@@ -80,16 +80,17 @@ class Finder:
                 )
             elif layout == "new":
 
-                link = post.find_element(
+                links = post.find_elements(
                     By.CSS_SELECTOR, 'span > a[role="link"]' if isGroup else 'span > a[aria-label][role="link"]'
                 )
-                if link is not None:
-                    status_link = link.get_attribute("href")
-                    status = Scraping_utilities._Scraping_utilities__extract_id_from_link(
-                        status_link
-                    )
-                    if not isGroup and status_link and status: #early exit for non group
-                        return (status, status_link, link)
+                if links:
+                    for link in links:
+                        status_link = link.get_attribute("href")
+                        status = Scraping_utilities._Scraping_utilities__extract_id_from_link(
+                            status_link
+                        )
+                        if status_link and status != "NA": #early exit for non group
+                            return (status, status_link, link)
 
                 links = post.find_elements(By.TAG_NAME, 'a')
                 if links:

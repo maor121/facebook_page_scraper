@@ -15,6 +15,10 @@ ch.setFormatter(format)
 logger.addHandler(ch)
 
 
+def list_argwhere(lst, value):
+    return [i for i, x in enumerate(lst) if x == value]
+
+
 class Scraping_utilities:
     @staticmethod
     def __extract_numbers(string):
@@ -69,7 +73,9 @@ class Scraping_utilities:
             status = "NA"
             # if url pattern container "/posts"
             if "posts/" in link:
-                status = link.split('/')[5].split('?')[0]
+                slash_split = link.split("/")
+                status_idx = list_argwhere(slash_split, "posts")[0] + 1
+                status = slash_split[status_idx].split('?')[0]
             # if url pattern container "/photos"
             elif "photos/" in link:
                 status = link.split("/")[-2]
