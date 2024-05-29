@@ -69,9 +69,15 @@ class Utilities:
         try:
             driver.execute_script(
                 "window.scrollTo(0, document.body.scrollHeight);")
-            close_button = driver.find_element(
-                By.CSS_SELECTOR, '[aria-label="Close"]')
-            close_button.click()
+            close_text_options = ["Close", "סגירה"]
+            for text in close_text_options:
+                try:
+                    close_button = driver.find_element(
+                        By.CSS_SELECTOR, f'[aria-label="{text}"]')
+                    close_button.click()
+                    break
+                except NoSuchElementException as ex:
+                    pass
         except NoSuchElementException:
             pass
         except Exception as ex:
