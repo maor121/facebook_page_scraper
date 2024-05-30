@@ -42,7 +42,7 @@ class Facebook_scraper:
 
     def __init__(self, page_or_group_name, posts_count=10, browser="chrome", proxy=None, 
                  timeout=600, headless=True, isGroup=False, username=None, password=None,
-                 extensions: List[BrowserExtension] = []):
+                 extensions: List[BrowserExtension] = [], browser_args: List[str] = []):
         self.page_or_group_name = page_or_group_name
         self.posts_count = int(posts_count)
         #self.URL = "https://en-gb.facebook.com/pg/{}/posts".format(self.page_or_group_name)
@@ -57,6 +57,7 @@ class Facebook_scraper:
         self.username = username
         self.password = password
         self.extensions = extensions
+        self.browser_args = browser_args
         self.__data_dict = {}  # this dictionary stores all post's data
         # __extracted_post contains all the post's ID that have been scraped before and as it set() it avoids post's ID duplication.
         self.__extracted_post = set()
@@ -64,7 +65,8 @@ class Facebook_scraper:
     def __start_driver(self):
         """changes the class member __driver value to driver on call"""
         self.__driver = Initializer(
-            self.browser, self.proxy, self.headless, browser_extensions=self.extensions).init()
+            self.browser, self.proxy, self.headless, browser_extensions=self.extensions,
+            browser_args=self.browser_args).init()
 
     def __handle_popup(self, layout):
         # while scrolling, wait for login popup to show, it can be skipped by clicking "Not Now" button
@@ -239,8 +241,8 @@ class Facebook_scraper:
                 # print("comments: " + post_content)
 
                 # extract time
-                posted_time = Finder._Finder__find_posted_time(
-                    post, self.__layout, link_element, self.__driver, self.isGroup)
+                # posted_time = Finder._Finder__find_posted_time(
+                #     post, self.__layout, link_element, self.__driver, self.isGroup)
 
                 # NOTE below is  additional fields to scrape, all of which have not been thoroughly tested for groups
                 if not self.isGroup:
@@ -335,7 +337,7 @@ class Facebook_scraper:
                     **({"reactions": reactions} if not self.isGroup else {}),
                     **({"reaction_count": total_reaction_count} if not self.isGroup else {}),
                     **({"comments": comments} if not self.isGroup else {}),
-                    **({"posted_on": posted_time}),
+                    **({"posted_on": posted_time} if not self.isGroup else {}),
                     **({"video": video} if not self.isGroup else {}),
                 }
             except Exception as ex:

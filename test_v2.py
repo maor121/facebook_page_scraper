@@ -1,3 +1,5 @@
+import time
+
 import facebook_page_scraper
 from facebook_page_scraper.proxy_ext import ProxyAuthChromeExtension
 
@@ -11,7 +13,13 @@ if __name__ == "__main__":
     proxy_port = 99999   # YOUR PROXY
     proxy_extension = ProxyAuthChromeExtension(proxy_username, proxy_password, endpoint, proxy_port)
 
-    group = facebook_page_scraper.Facebook_scraper("170918513059147",5,"chrome",
-                                                   isGroup=True,  headless=False, extensions=[proxy_extension])
+    group_id = 441654752934426  # problematic realestate group
+    #group_id = 170918513059147  # anime group (test)
+
+    group = facebook_page_scraper.Facebook_scraper(f"{group_id}",5,"chrome",
+                                                   isGroup=True,  headless=False, extensions=[proxy_extension],
+                                                   #browser_args=["--incognito"]
+                                                   )
     res = group.scrap_to_json()
     print(res)
+    time.sleep(1000)
