@@ -237,7 +237,11 @@ class Facebook_scraper:
                 post_content = Finder._Finder__find_content(
                     post, self.__driver, self.__layout)
                 # print("comments: " + post_content)
-                
+
+                # extract time
+                posted_time = Finder._Finder__find_posted_time(
+                    post, self.__layout, link_element, self.__driver, self.isGroup)
+
                 # NOTE below is  additional fields to scrape, all of which have not been thoroughly tested for groups
                 if not self.isGroup:
                     # find share from the post
@@ -314,11 +318,6 @@ class Facebook_scraper:
                     comments = Finder._Finder__find_comments(post, self.__layout)
                     comments = int(
                         Scraping_utilities._Scraping_utilities__value_to_float(comments))
-                    
-
-                    # extract time
-                    posted_time = Finder._Finder__find_posted_time(
-                        post, self.__layout, link_element, self.__driver, self.isGroup)
 
                     video = Finder._Finder__find_video_url(post)
 
@@ -336,7 +335,7 @@ class Facebook_scraper:
                     **({"reactions": reactions} if not self.isGroup else {}),
                     **({"reaction_count": total_reaction_count} if not self.isGroup else {}),
                     **({"comments": comments} if not self.isGroup else {}),
-                    **({"posted_on": posted_time} if not self.isGroup else {}),
+                    **({"posted_on": posted_time}),
                     **({"video": video} if not self.isGroup else {}),
                 }
             except Exception as ex:
