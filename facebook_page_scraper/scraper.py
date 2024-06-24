@@ -241,8 +241,8 @@ class Facebook_scraper:
                 # print("comments: " + post_content)
 
                 # extract time
-                # posted_time = Finder._Finder__find_posted_time(
-                #     post, self.__layout, link_element, self.__driver, self.isGroup)
+                posted_time = Finder._Finder__find_posted_time(
+                    post, self.__layout, link_element, self.__driver, self.isGroup)
 
                 # NOTE below is  additional fields to scrape, all of which have not been thoroughly tested for groups
                 if not self.isGroup:

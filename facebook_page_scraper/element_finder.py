@@ -7,6 +7,7 @@ import time
 import urllib.request
 
 import dateutil
+import pyautogui
 from dateutil.parser import parse
 from selenium.common.exceptions import NoSuchElementException, TimeoutException
 from selenium.webdriver.common.by import By
@@ -330,6 +331,27 @@ class Finder:
                         return shadowContent;
                     """
                     # Execute the script with the link_element as the argument
+
+                    # Execute JavaScript to scroll the element into the middle of the view
+                    #driver.maximize_window()
+                    driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", link_element)
+                    win_pos = driver.get_window_position()
+                    el_pos = link_element.location
+                    scroll_x = driver.execute_script('return window.scrollX;')
+                    scroll_y = driver.execute_script('return window.scrollY;')
+                    panel_height = driver.execute_script('return window.outerHeight - window.innerHeight;')
+                    delta_x = 15
+                    pyautogui.moveTo(win_pos['x'] + el_pos['x'] - scroll_x + delta_x,
+                                     win_pos['y'] + el_pos['y'] - scroll_y + panel_height)
+                    time.sleep(0.1)
+                    #print(link_element.get_attribute("outerHTML"))
+                    time.sleep(1)
+                    tooltip_element = driver.find_element(By.CLASS_NAME, "__fb-dark-mode")
+                    #print(tooltip_element.get_attribute("outerHTML"))
+                    #print(tooltip_element.text)
+                    tooltip_text = tooltip_element.text
+
+
                     timestamp = driver.execute_script(js_script, link_element)
                     print("TIMESTAMP: " + str(timestamp))
                 elif not isGroup:
