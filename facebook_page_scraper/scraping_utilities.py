@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import logging
 import re
+import time
 from datetime import datetime
 from datetime import datetime as dt
 from datetime import timedelta
@@ -65,6 +66,24 @@ class Scraping_utilities:
         input dictionary = {"s":1,"d":34},
         output=> 35"""
         return sum(dictionary.values())
+
+    @staticmethod
+    def __extract_post_id_from_link(link):
+        """expects the post's URL as a argument, and extracts out post_id from that URL"""
+        try:
+            # if url pattern container "/posts"
+            if "posts/" in link:
+                slash_split = link.split("/")
+                status_idx = list_argwhere(slash_split, "posts")[0] + 1
+                status = slash_split[status_idx].split('?')[0]
+                status_link = link[:link.index(status) + len(status)]
+            else:
+                status = "NA"
+                status_link = None
+        except Exception as ex:
+            status = "NA"
+            status_link = None
+        return status, status_link
 
     @staticmethod
     def __extract_id_from_link(link):

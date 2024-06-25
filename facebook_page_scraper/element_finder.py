@@ -14,6 +14,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
+from . import utils
 from .driver_utilities import Utilities
 from .scraping_utilities import Scraping_utilities
 
@@ -81,37 +82,15 @@ class Finder:
                 )
             elif layout == "new":
 
-                links = post.find_elements(
-                    By.CSS_SELECTOR, 'span > a[role="link"]' if isGroup else 'span > a[aria-label][role="link"]'
-                )
+                links = post.find_elements(By.CSS_SELECTOR, 'span > a[role="link"]')
                 if links:
                     for link in links:
                         status_link = link.get_attribute("href")
-                        status = Scraping_utilities._Scraping_utilities__extract_id_from_link(
+                        status, status_link = Scraping_utilities._Scraping_utilities__extract_post_id_from_link(
                             status_link
                         )
                         if status_link and status != "NA": #early exit for non group
                             return (status, status_link, link)
-
-                links = post.find_elements(By.TAG_NAME, 'a')
-                if links:
-                    # Initialize variables to store the matching link element and URL
-                    matching_link_element = None
-                    post_url = None
-
-                    # Iterate over links to find the first one that matches the criteria
-                    for link in links:
-                        href = link.get_attribute('href')
-                        if href and '/groups/' in href:
-                            post_url = href  # Store the URL
-                            matching_link_element = link  # Store the link element
-                            break  # Exit the loop after finding the first match
-
-                    # Check if a matching link was found
-                    if post_url and matching_link_element:
-                        status = Scraping_utilities._Scraping_utilities__extract_id_from_link(post_url)
-                        # Now you have the URL, the status, and the matching link element itself
-                        return (status, post_url, matching_link_element)
 
         except NoSuchElementException:
             # if element is not found
@@ -345,14 +324,15 @@ class Finder:
                                      win_pos['y'] + el_pos['y'] - scroll_y + panel_height)
                     time.sleep(0.1)
                     #print(link_element.get_attribute("outerHTML"))
-                    time.sleep(1)
+                    time.sleep(0.4)
                     tooltip_element = driver.find_element(By.CLASS_NAME, "__fb-dark-mode")
                     #print(tooltip_element.get_attribute("outerHTML"))
                     #print(tooltip_element.text)
                     tooltip_text = tooltip_element.text
 
+                    timestamp = utils.parse_datetime(tooltip_text).isoformat()
 
-                    timestamp = driver.execute_script(js_script, link_element)
+                    #timestamp = driver.execute_script(js_script, link_element)
                     print("TIMESTAMP: " + str(timestamp))
                 elif not isGroup:
                     aria_label_value = link_element.get_attribute("aria-label")

@@ -337,7 +337,7 @@ class Facebook_scraper:
                     **({"reactions": reactions} if not self.isGroup else {}),
                     **({"reaction_count": total_reaction_count} if not self.isGroup else {}),
                     **({"comments": comments} if not self.isGroup else {}),
-                    **({"posted_on": posted_time} if not self.isGroup else {}),
+                    **({"posted_on": posted_time}), #if not self.isGroup else {}),
                     **({"video": video} if not self.isGroup else {}),
                 }
             except Exception as ex:
