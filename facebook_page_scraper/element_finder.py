@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import datetime
 import logging
+import random
 import re
 import sys
 import time
@@ -320,8 +321,9 @@ class Finder:
                     scroll_y = driver.execute_script('return window.scrollY;')
                     panel_height = driver.execute_script('return window.outerHeight - window.innerHeight;')
                     delta_x = 15
+                    duration = random.uniform(0.2, 2)
                     pyautogui.moveTo(win_pos['x'] + el_pos['x'] - scroll_x + delta_x,
-                                     win_pos['y'] + el_pos['y'] - scroll_y + panel_height)
+                                     win_pos['y'] + el_pos['y'] - scroll_y + panel_height, duration=duration)
                     time.sleep(0.1)
                     #print(link_element.get_attribute("outerHTML"))
                     time.sleep(0.4)

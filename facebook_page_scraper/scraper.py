@@ -3,8 +3,11 @@ import csv
 import json
 import logging
 import os
+import random
 import time
 from typing import List
+
+import pyautogui
 
 from .driver_initialization import Initializer
 from .driver_utilities import Utilities
@@ -216,6 +219,11 @@ class Facebook_scraper:
 
         # iterate over all the posts and find details from the same
         for post in all_posts:
+            max_delta = 100
+            duration = random.uniform(0.2, 2)
+            delta_x, delya_y = random.randint(-max_delta, max_delta), random.randint(-max_delta, max_delta)
+            pyautogui.moveRel(delta_x, delya_y, duration=duration)
+
             try:
                 # find post ID from post
                 status, post_url, link_element = Finder._Finder__find_status(
