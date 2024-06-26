@@ -16,10 +16,11 @@ if __name__ == "__main__":
     group_id = 441654752934426  # problematic realestate group
     #group_id = 170918513059147  # anime group (test)
 
-    group = facebook_page_scraper.Facebook_scraper(f"{group_id}",5,"chrome",
+    group = facebook_page_scraper.Facebook_scraper(f"{group_id}",40,"chrome",
                                                    isGroup=True,  headless=False, extensions=[proxy_extension],
                                                    #browser_args=["--incognito"]
-                                                   )
+                                                   browser_args=["--lang=he"],
+                                                   browser_exp_options={
+                                                       "prefs": {"profile.managed_default_content_settings.images": 2}})
     res = group.scrap_to_json()
     print(res)
-    time.sleep(1000)

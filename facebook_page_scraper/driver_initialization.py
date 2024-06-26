@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from typing import List
+from typing import List, Dict, Any
 
 from seleniumwire import webdriver
 # to add capabilities for chrome and firefox, import their Options with different aliases
@@ -23,12 +23,13 @@ logger.addHandler(ch)
 class Initializer:
 
     def __init__(self, browser_name, proxy=None, headless=True, browser_extensions: List[BrowserExtension] = [],
-                 browser_args: List[str] = []):
+                 browser_args: List[str] = [], browser_exp_options: Dict[str, Any] = {}):
         self.browser_name = browser_name
         self.proxy = proxy
         self.headless = headless
         self.browser_extensions = browser_extensions
         self.browser_args = browser_args
+        self.browser_exp_options = browser_exp_options
 
     def set_properties(self, browser_option):
         """adds capabilities to the driver"""
@@ -42,6 +43,9 @@ class Initializer:
         browser_option.add_argument('--log-level=3')
         browser_option.add_argument('--disable-notifications')
         browser_option.add_argument('--disable-popup-blocking')
+
+        for arg in self.browser_exp_options:
+            browser_option.add_experimental_option(arg, self.browser_exp_options[arg])
 
         for arg in self.browser_args:
             browser_option.add_argument(arg)
