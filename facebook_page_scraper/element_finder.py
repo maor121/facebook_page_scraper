@@ -257,11 +257,11 @@ class Finder:
                             driver, post_content, 'div[dir="auto"] > div[role]'
                         )
                         content = post_content.get_attribute(
-                            "textContent"
+                            "innerText"
                         )  # extract content out of it
                 else:
                     # if it does not have see more, just get the text out of it
-                    content = post_content.get_attribute("textContent")
+                    content = post_content.get_attribute("innerText")
 
         except NoSuchElementException:
             # if [data-testid="post_message"] is not found, it means that post did not had any text,either it is image or video
