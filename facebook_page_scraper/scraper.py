@@ -234,17 +234,14 @@ class Facebook_scraper:
                     print("no post_url, skipping")
                     continue
 
-
                 # Split the URL on the '?' character, to detach the referer or uneeded query info
                 parts = post_url.split('?')
                 # The first part of the list is the URL up to the '?'
                 post_url = parts[0]
 
-
                 # finds name depending on if this facebook site is a page or group (we pass a post obj or a webDriver)
-                name = Finder._Finder__find_name(
+                name, name_link = Finder._Finder__find_name(
                     post if self.isGroup else self.__driver, self.__layout)  # find name element for page or for each post if this is used for group pages
-                
 
                 post_content = Finder._Finder__find_content(
                     post, self.__driver, self.__layout)
@@ -339,6 +336,7 @@ class Facebook_scraper:
 
                 self.__data_dict[status] = {
                     "name": name,
+                    "name_link": name_link,
                     "content": post_content,
                     "images": image,
                     "post_url": post_url,

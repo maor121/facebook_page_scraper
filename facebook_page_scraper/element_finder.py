@@ -432,17 +432,21 @@ class Finder:
 
         try:
             if layout == "old":
-                name = driverOrPost.find_element(By.CSS_SELECTOR, "a._64-f").get_attribute(
-                    "textContent"
-            )
-            elif layout == "new":
-                name = driverOrPost.find_element(By.TAG_NAME, "strong").get_attribute(
-                    "textContent"
-                )
+                name_element = driverOrPost.find_element(By.CSS_SELECTOR, "a._64-f")
 
-            return name
+            elif layout == "new":
+                name_element = driverOrPost.find_element(By.TAG_NAME, "strong")
+            else:
+                raise NotImplementedError("Unknown layout")
+            name = name_element.get_attribute("textContent")
+            link = name_element.find_element(By.XPATH, "./..").get_attribute("href")
+            if link:
+                link = link.split("?")[0]
+
+            return name, link
         except Exception as ex:
             logger.exception("Error at __find_name method : {}".format(ex))
+        return None, None
 
     @staticmethod
     def __detect_ui(driver):
