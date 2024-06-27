@@ -17,6 +17,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 
 from . import utils
 from .driver_utilities import Utilities
+from .exceptions import LoginRequired
 from .scraping_utilities import Scraping_utilities
 
 logger = logging.getLogger(__name__)
@@ -321,7 +322,7 @@ class Finder:
                     scroll_y = driver.execute_script('return window.scrollY;')
                     panel_height = driver.execute_script('return window.outerHeight - window.innerHeight;')
                     delta_x = 15
-                    duration = random.uniform(0.2, 2)
+                    duration = random.uniform(0.2, 1.2)
                     pyautogui.moveTo(win_pos['x'] + el_pos['x'] - scroll_x + delta_x,
                                      win_pos['y'] + el_pos['y'] - scroll_y + panel_height, duration=duration)
                     time.sleep(0.1)
@@ -445,6 +446,14 @@ class Finder:
 
     @staticmethod
     def __detect_ui(driver):
+
+        body_html = driver.find_element(By.TAG_NAME, 'body').get_attribute('outerHTML')
+        login_block_strs = ["עליך להתחבר כדי להמשיך", "You must log in to continue."]
+        login_required = any(login_block_str in body_html for login_block_str in login_block_strs)
+
+        if login_required:
+            raise LoginRequired()
+
         try:
             driver.find_element(By.ID, "pagelet_bluebar")
             return "old"
@@ -469,6 +478,9 @@ class Finder:
 
     @staticmethod
     def __accept_cookies(driver):
+        # TODO: Do we need to accept cookies?
+        return # Skip
+
         try:
             button = driver.find_elements(
                 By.CSS_SELECTOR, '[aria-label="Allow essential and optional cookies"]'
