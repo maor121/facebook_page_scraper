@@ -9,6 +9,7 @@ import urllib.request
 
 import dateutil
 import pyautogui
+import pygetwindow
 from dateutil.parser import parse
 from selenium.common.exceptions import NoSuchElementException, TimeoutException
 from selenium.webdriver.common.by import By
@@ -25,6 +26,29 @@ format = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s
 ch = logging.StreamHandler()
 ch.setFormatter(format)
 logger.addHandler(ch)
+
+
+def bring_browser_to_front(driver):
+    # Execute JavaScript to check if the current page is visible
+
+    # Get the title of the current window
+    #window_handle = driver.current_window_handle
+    window_title = driver.title
+    window = pygetwindow.getWindowsWithTitle(window_title)[0]
+
+    try:
+        if window.isMinimized:
+            window.restore()
+        if not window.isActive:
+            window.activate()
+    except pygetwindow.PyGetWindowException as ex:
+        # logger.exception("Error at bring_browser_to_front: {}".format(ex))
+        pass    # sometimes the browser is at the front, but we recieve exception anyway, continue
+
+    # Bring to front (by minimizing & maximizing)
+    # position = driver.get_window_position()
+    # driver.minimize_window()
+    # driver.set_window_position(position['x'], position['y'])
 
 
 class Finder:
@@ -207,6 +231,7 @@ class Finder:
     def __find_content(post, driver, layout):
         """finds content of the facebook post using selenium's webdriver's method and returns string containing text of the posts"""
         try:
+            contents = []
             if layout == "old":
                 post_content = post.find_element(By.CLASS_NAME, "userContent")
                 # if 'See more' or 'Continue reading' is present in post
@@ -238,39 +263,42 @@ class Finder:
                 else:
                     # if it does not have see more, just get the text out of it
                     content = post_content.get_attribute("textContent")
+
+                    contents.append(content)
             elif layout == "new":
-                post_content = post.find_element(
+                post_contents = post.find_elements(
                     By.CSS_SELECTOR, '[data-ad-preview="message"]'
                 )
-                # if "See More" button exists
-                if Finder._Finder__element_exists(
-                    post_content, 'div[dir="auto"] > div[role]'
-                ):
-                    element = post_content.find_element(
-                        By.CSS_SELECTOR, 'div[dir="auto"] > div[role]'
-                    )  # grab that element
-                    if element.get_attribute("target"):
-                        content = Finder._Finder__fetch_post_passage(
-                            element.get_attribute("href")
-                        )
+                for post_content in post_contents:
+                    # if "See More" button exists
+                    if Finder._Finder__element_exists(
+                        post_content, 'div[dir="auto"] > div[role]'
+                    ):
+                        element = post_content.find_element(
+                            By.CSS_SELECTOR, 'div[dir="auto"] > div[role]'
+                        )  # grab that element
+                        if element.get_attribute("target"):
+                            content = Finder._Finder__fetch_post_passage(
+                                element.get_attribute("href")
+                            )
+                        else:
+                            Utilities._Utilities__click_see_more(
+                                driver, post_content, 'div[dir="auto"] > div[role]'
+                            )
+                            content = post_content.get_attribute(
+                                "innerText"
+                            )  # extract content out of it
                     else:
-                        Utilities._Utilities__click_see_more(
-                            driver, post_content, 'div[dir="auto"] > div[role]'
-                        )
-                        content = post_content.get_attribute(
-                            "innerText"
-                        )  # extract content out of it
-                else:
-                    # if it does not have see more, just get the text out of it
-                    content = post_content.get_attribute("innerText")
+                        # if it does not have see more, just get the text out of it
+                        content = post_content.get_attribute("innerText")
 
+                    contents.append(content)
         except NoSuchElementException:
             # if [data-testid="post_message"] is not found, it means that post did not had any text,either it is image or video
-            content = ""
+            pass
         except Exception as ex:
             logger.exception("Error at find_content method : {}".format(ex))
-            content = ""
-        return content
+        return contents
 
     @staticmethod
     def __find_posted_time(post, layout, link_element, driver, isGroup):
@@ -312,6 +340,7 @@ class Finder:
                         return shadowContent;
                     """
                     # Execute the script with the link_element as the argument
+                    #timestamp = driver.execute_script(js_script, link_element)
 
                     # Execute JavaScript to scroll the element into the middle of the view
                     #driver.maximize_window()
@@ -323,19 +352,17 @@ class Finder:
                     panel_height = driver.execute_script('return window.outerHeight - window.innerHeight;')
                     delta_x = 15
                     duration = random.uniform(0.2, 1.2)
+                    # Bring window to front (Needed for the FB tooltip to be visible)
+                    bring_browser_to_front(driver)   # UGLY!
                     pyautogui.moveTo(win_pos['x'] + el_pos['x'] - scroll_x + delta_x,
                                      win_pos['y'] + el_pos['y'] - scroll_y + panel_height, duration=duration)
                     time.sleep(0.1)
-                    #print(link_element.get_attribute("outerHTML"))
                     time.sleep(0.4)
                     tooltip_element = driver.find_element(By.CLASS_NAME, "__fb-dark-mode")
-                    #print(tooltip_element.get_attribute("outerHTML"))
-                    #print(tooltip_element.text)
                     tooltip_text = tooltip_element.text
 
                     timestamp = utils.parse_datetime(tooltip_text).isoformat()
 
-                    #timestamp = driver.execute_script(js_script, link_element)
                     print("TIMESTAMP: " + str(timestamp))
                 elif not isGroup:
                     aria_label_value = link_element.get_attribute("aria-label")

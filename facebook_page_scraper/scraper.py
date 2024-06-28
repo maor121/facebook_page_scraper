@@ -243,7 +243,7 @@ class Facebook_scraper:
                 name, name_link = Finder._Finder__find_name(
                     post if self.isGroup else self.__driver, self.__layout)  # find name element for page or for each post if this is used for group pages
 
-                post_content = Finder._Finder__find_content(
+                post_contents = Finder._Finder__find_content(
                     post, self.__driver, self.__layout)
                 # print("comments: " + post_content)
 
@@ -337,7 +337,7 @@ class Facebook_scraper:
                 self.__data_dict[status] = {
                     "name": name,
                     "name_link": name_link,
-                    "content": post_content,
+                    "content": post_contents,
                     "images": image,
                     "post_url": post_url,
                     # NOTE only include the following fields if scraping a page, not tested for groups yet
