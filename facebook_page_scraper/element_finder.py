@@ -223,38 +223,42 @@ class Finder:
             for i, child in enumerate(child_nodes):
                 # If node is text, add its content to result
                 if isinstance(child, str):
-                    if i == 0:
-                        result += "\n"
                     result += child
                 # If node is an image, add its alt attribute to result
                 elif child.tag_name == 'img':
                     result += child.get_attribute('alt')
                 # If node is not a text or an image, process its child nodes
                 else:
-                    result += get_text_with_image_alt_helper(driver, child)
+                    is_block_child = driver.execute_script("return window.getComputedStyle(arguments[0], null).display;",
+                                                       child) == 'block'
+                    child_text = get_text_with_image_alt_helper(driver, child)
+                    if is_block_child and len(child_text) > 0 and child_text[0] != '\n':
+                        result += '\n'
+                    result += child_text
 
             return result
         text_no_newline = get_text_with_image_alt_helper(driver, element)
         text_no_newline = text_no_newline[1:]   # remove extra newline
 
         # Add missing double newlines
+        # new paragraphs have \n\n
         # i = j = 0
         # str_parts = []
         # org_text = element.get_attribute('innerText')
-        # # org_text = element.text
+        # # # org_text = element.text
         # while i < len(org_text):
         #     if org_text[i] == text_no_newline[j]:
         #         str_parts.append(text_no_newline[j])
         #         i += 1
         #         j += 1
-        #     elif org_text[i] == '\n':
+        #     elif i >= 1 and org_text[i-1:i+1] == '\n\n':
         #         str_parts.append('\n')
         #         i += 1
         #     else:
         #         str_parts.append(text_no_newline[j])
         #         j += 1
         # if j < len(text_no_newline):
-        #     str_parts.append(text_no_newline[j+1:])
+        #     str_parts.append(text_no_newline[j:])
         # return ''.join(str_parts)
 
         return text_no_newline
@@ -322,13 +326,21 @@ class Finder:
                             )  # extract content out of it
                             content2 = Finder.get_text_with_image_alt(driver, post_content)
                             if content != content2:
-                                print("A")
+                                print("|"*20)
+                                print(content)
+                                print("|"*20)
+                                print(content2)
+                                print()
                     else:
                         # if it does not have see more, just get the text out of it
                         content = post_content.get_attribute("innerText")
                         content2 = Finder.get_text_with_image_alt(driver, post_content)
                         if content != content2:
-                            print("A")
+                            print("|" * 20)
+                            print(content)
+                            print("|" * 20)
+                            print(content2)
+                            print()
 
                     contents.append(content)
         except NoSuchElementException:
