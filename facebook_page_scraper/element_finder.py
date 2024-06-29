@@ -10,6 +10,7 @@ import urllib.request
 import dateutil
 import pyautogui
 import pygetwindow
+import selenium
 from dateutil.parser import parse
 from selenium.common.exceptions import NoSuchElementException, TimeoutException
 from selenium.webdriver.common.by import By
@@ -17,7 +18,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
 from . import utils
-from .driver_utilities import Utilities
+from .driver_utilities import Utilities, translate_element_loc_to_absolute_loc, bring_browser_to_front
 from .exceptions import LoginRequired
 from .scraping_utilities import Scraping_utilities
 
@@ -26,29 +27,6 @@ format = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s
 ch = logging.StreamHandler()
 ch.setFormatter(format)
 logger.addHandler(ch)
-
-
-def bring_browser_to_front(driver):
-    # Execute JavaScript to check if the current page is visible
-
-    # Get the title of the current window
-    #window_handle = driver.current_window_handle
-    window_title = driver.title
-    window = pygetwindow.getWindowsWithTitle(window_title)[0]
-
-    try:
-        if window.isMinimized:
-            window.restore()
-        if not window.isActive:
-            window.activate()
-    except pygetwindow.PyGetWindowException as ex:
-        # logger.exception("Error at bring_browser_to_front: {}".format(ex))
-        pass    # sometimes the browser is at the front, but we recieve exception anyway, continue
-
-    # Bring to front (by minimizing & maximizing)
-    # position = driver.get_window_position()
-    # driver.minimize_window()
-    # driver.set_window_position(position['x'], position['y'])
 
 
 class Finder:
@@ -228,6 +206,60 @@ class Finder:
             return False
 
     @staticmethod
+    def get_text_with_image_alt(driver, element):
+        def get_text_with_image_alt_helper(driver, element):
+            # Execute JavaScript to get child nodes
+            child_nodes = driver.execute_script("""
+                            return Array.from(arguments[0].childNodes).map(function(child) {
+                                if (child.nodeType === Node.ELEMENT_NODE) {
+                                    return child;
+                                } else if (child.nodeType === Node.TEXT_NODE) {
+                                    return child.textContent;
+                                }
+                            });
+                            """, element)
+
+            result = ""
+            for i, child in enumerate(child_nodes):
+                # If node is text, add its content to result
+                if isinstance(child, str):
+                    if i == 0:
+                        result += "\n"
+                    result += child
+                # If node is an image, add its alt attribute to result
+                elif child.tag_name == 'img':
+                    result += child.get_attribute('alt')
+                # If node is not a text or an image, process its child nodes
+                else:
+                    result += get_text_with_image_alt_helper(driver, child)
+
+            return result
+        text_no_newline = get_text_with_image_alt_helper(driver, element)
+        text_no_newline = text_no_newline[1:]   # remove extra newline
+
+        # Add missing double newlines
+        # i = j = 0
+        # str_parts = []
+        # org_text = element.get_attribute('innerText')
+        # # org_text = element.text
+        # while i < len(org_text):
+        #     if org_text[i] == text_no_newline[j]:
+        #         str_parts.append(text_no_newline[j])
+        #         i += 1
+        #         j += 1
+        #     elif org_text[i] == '\n':
+        #         str_parts.append('\n')
+        #         i += 1
+        #     else:
+        #         str_parts.append(text_no_newline[j])
+        #         j += 1
+        # if j < len(text_no_newline):
+        #     str_parts.append(text_no_newline[j+1:])
+        # return ''.join(str_parts)
+
+        return text_no_newline
+
+    @staticmethod
     def __find_content(post, driver, layout):
         """finds content of the facebook post using selenium's webdriver's method and returns string containing text of the posts"""
         contents = []
@@ -264,7 +296,7 @@ class Finder:
                     # if it does not have see more, just get the text out of it
                     content = post_content.get_attribute("textContent")
 
-                    contents.append(content)
+                contents.append(content)
             elif layout == "new":
                 post_contents = post.find_elements(
                     By.CSS_SELECTOR, '[data-ad-preview="message"]'
@@ -288,9 +320,15 @@ class Finder:
                             content = post_content.get_attribute(
                                 "innerText"
                             )  # extract content out of it
+                            content2 = Finder.get_text_with_image_alt(driver, post_content)
+                            if content != content2:
+                                print("A")
                     else:
                         # if it does not have see more, just get the text out of it
                         content = post_content.get_attribute("innerText")
+                        content2 = Finder.get_text_with_image_alt(driver, post_content)
+                        if content != content2:
+                            print("A")
 
                     contents.append(content)
         except NoSuchElementException:
@@ -382,18 +420,12 @@ class Finder:
 
                     # Execute JavaScript to scroll the element into the middle of the view
                     #driver.maximize_window()
-                    driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", link_element)
-                    win_pos = driver.get_window_position()
-                    el_pos = link_element.location
-                    scroll_x = driver.execute_script('return window.scrollX;')
-                    scroll_y = driver.execute_script('return window.scrollY;')
-                    panel_height = driver.execute_script('return window.outerHeight - window.innerHeight;')
-                    delta_x = 15
+                    loc_x, loc_y = translate_element_loc_to_absolute_loc(driver, link_element)
+
                     duration = random.uniform(0.2, 1.2)
                     # Bring window to front (Needed for the FB tooltip to be visible)
                     bring_browser_to_front(driver)   # UGLY!
-                    pyautogui.moveTo(win_pos['x'] + el_pos['x'] - scroll_x + delta_x,
-                                     win_pos['y'] + el_pos['y'] - scroll_y + panel_height, duration=duration)
+                    pyautogui.moveTo(loc_x, loc_y, duration=duration)
                     time.sleep(0.4)
                     tooltip_element = driver.find_element(By.CLASS_NAME, "__fb-dark-mode")
                     tooltip_text = tooltip_element.text

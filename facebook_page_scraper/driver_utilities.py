@@ -1,10 +1,13 @@
 #!/usr/bin/env python3
 
 import logging
+import random
 import sys
 import time
 from random import randint
 
+import pyautogui
+import pygetwindow
 from selenium.common.exceptions import (NoSuchElementException,
                                         WebDriverException)
 from selenium.webdriver.common.by import By
@@ -18,6 +21,41 @@ format = logging.Formatter(
 ch = logging.StreamHandler()
 ch.setFormatter(format)
 logger.addHandler(ch)
+
+
+def bring_browser_to_front(driver):
+    # Execute JavaScript to check if the current page is visible
+
+    # Get the title of the current window
+    #window_handle = driver.current_window_handle
+    window_title = driver.title
+    window = pygetwindow.getWindowsWithTitle(window_title)[0]
+
+    try:
+        if window.isMinimized:
+            window.restore()
+        if not window.isActive:
+            window.activate()
+    except pygetwindow.PyGetWindowException as ex:
+        # logger.exception("Error at bring_browser_to_front: {}".format(ex))
+        pass    # sometimes the browser is at the front, but we recieve exception anyway, continue
+
+    # Bring to front (by minimizing & maximizing)
+    # position = driver.get_window_position()
+    # driver.minimize_window()
+    # driver.set_window_position(position['x'], position['y'])
+
+
+def translate_element_loc_to_absolute_loc(driver, element):
+    driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", element)
+    win_pos = driver.get_window_position()
+    el_pos = element.location
+    scroll_x = driver.execute_script('return window.scrollX;')
+    scroll_y = driver.execute_script('return window.scrollY;')
+    panel_height = driver.execute_script('return window.outerHeight - window.innerHeight;')
+    delta_x = random.randint(15,22)
+
+    return win_pos['x'] + el_pos['x'] - scroll_x + delta_x, win_pos['y'] + el_pos['y'] - scroll_y + panel_height
 
 
 class Utilities:
@@ -67,14 +105,21 @@ class Utilities:
     @staticmethod
     def __close_modern_layout_signup_modal(driver):
         try:
-            driver.execute_script(
-                "window.scrollTo(0, document.body.scrollHeight);")
+            # driver.execute_script(
+            #     "window.scrollTo(0, document.body.scrollHeight);")
             close_text_options = ["Close", "סגירה"]
             for text in close_text_options:
                 try:
                     close_button = driver.find_element(
                         By.CSS_SELECTOR, f'[aria-label="{text}"]')
-                    close_button.click()
+
+                    bring_browser_to_front(driver)
+                    loc_x, loc_y = translate_element_loc_to_absolute_loc(driver, close_button)
+                    duration = random.uniform(0.2, 1.2)
+                    pyautogui.moveTo(loc_x, loc_y, duration=duration)
+                    pyautogui.click()
+
+                    # close_button.click()
                     break
                 except NoSuchElementException as ex:
                     pass
