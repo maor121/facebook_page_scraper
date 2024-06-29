@@ -230,8 +230,8 @@ class Finder:
     @staticmethod
     def __find_content(post, driver, layout):
         """finds content of the facebook post using selenium's webdriver's method and returns string containing text of the posts"""
+        contents = []
         try:
-            contents = []
             if layout == "old":
                 post_content = post.find_element(By.CLASS_NAME, "userContent")
                 # if 'See more' or 'Continue reading' is present in post
@@ -301,6 +301,35 @@ class Finder:
         return contents
 
     @staticmethod
+    def __find_marketplace(post, layout, link_element, driver, isGroup):
+        """finds market place of the facebook post using selenium's webdriver's method"""
+        try:
+            if layout == "old":
+                raise NotImplementedError()
+            elif layout == "new":
+                marketplace_link_element = post.find_element_by_css_selector('a[href*="/marketplace/"]')
+
+                link = marketplace_link_element.get_attribute('href')
+                try:
+                    title = link.find_element_by_css_selector('span.html-span').get_attribute('textContent')
+                except NoSuchElementException:
+                    title = None
+
+                try:
+                    price = link.find_element_by_css_selector('span:not([class])').get_attribute('textContent')
+                except NoSuchElementException:
+                    price = None
+                return {
+                    'link': link,
+                    'title': title,
+                    'price': price
+                }
+
+        except NoSuchElementException as e:
+            # No marketplace element
+            return None
+
+    @staticmethod
     def __find_posted_time(post, layout, link_element, driver, isGroup):
         """finds posted time of the facebook post using selenium's webdriver's method"""
         try:
@@ -356,7 +385,6 @@ class Finder:
                     bring_browser_to_front(driver)   # UGLY!
                     pyautogui.moveTo(win_pos['x'] + el_pos['x'] - scroll_x + delta_x,
                                      win_pos['y'] + el_pos['y'] - scroll_y + panel_height, duration=duration)
-                    time.sleep(0.1)
                     time.sleep(0.4)
                     tooltip_element = driver.find_element(By.CLASS_NAME, "__fb-dark-mode")
                     tooltip_text = tooltip_element.text

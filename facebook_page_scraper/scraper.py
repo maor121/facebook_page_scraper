@@ -251,6 +251,11 @@ class Facebook_scraper:
                 posted_time = Finder._Finder__find_posted_time(
                     post, self.__layout, link_element, self.__driver, self.isGroup)
 
+                # extract market place
+                marketplace = Finder.__Finder__find_marketplace(
+                    post, self.__layout, self.__driver, self.isGroup
+                )
+
                 # NOTE below is  additional fields to scrape, all of which have not been thoroughly tested for groups
                 if not self.isGroup:
                     # find share from the post
@@ -340,6 +345,7 @@ class Facebook_scraper:
                     "content": post_contents,
                     "images": image,
                     "post_url": post_url,
+                    'marketplace': marketplace,
                     # NOTE only include the following fields if scraping a page, not tested for groups yet
                     **({"shares": shares} if not self.isGroup else {}),
                     **({"reactions": reactions} if not self.isGroup else {}),
