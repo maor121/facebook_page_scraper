@@ -303,31 +303,40 @@ class Finder:
     @staticmethod
     def __find_marketplace(post, driver, layout):
         """finds market place of the facebook post using selenium's webdriver's method"""
-        try:
-            if layout == "old":
-                raise NotImplementedError()
-            elif layout == "new":
-                link_element = post.find_element_by_css_selector('a[href*="/marketplace/"]')
+        if layout == "old":
+            raise NotImplementedError()
+        elif layout == "new":
+            link_elements = post.find_elements_by_css_selector('a[href*="/marketplace/"]')
 
-                link = link_element.get_attribute('href').split('?')[0]
-                try:
-                    title = link_element.find_element_by_css_selector('span.html-span').get_attribute('textContent')
-                except NoSuchElementException:
-                    title = None
+            if len(link_elements) > 0:
+                links = [l.get_attribute('href').split('?')[0] for l in link_elements]
+                assert len(set(links)) == 1, "Multiple marketplace links found: %s" % links
+                link = links[0]
+                for link_element in link_elements:
+                    try:
+                        title = (link_element.find_element_by_css_selector('span.html-span').
+                                 get_attribute('textContent'))
 
-                try:
-                    price = link_element.find_element_by_css_selector('span:not([class])').get_attribute('textContent')
-                except NoSuchElementException:
-                    price = None
+                        try:
+                            price = link_element.find_element_by_css_selector('span:not([class])').get_attribute(
+                                'textContent')
+                        except NoSuchElementException:
+                            price = None
+
+                        return {
+                            'link': link,
+                            'title': title,
+                            'price': price
+                        }
+                    except NoSuchElementException:
+                        continue
                 return {
                     'link': link,
-                    'title': title,
-                    'price': price
+                    'title': None,
+                    'price': None
                 }
-
-        except NoSuchElementException as e:
-            # No marketplace element
-            return None
+            else:
+                return None
 
     @staticmethod
     def __find_posted_time(post, layout, link_element, driver, isGroup):
