@@ -301,22 +301,22 @@ class Finder:
         return contents
 
     @staticmethod
-    def __find_marketplace(post, layout, link_element, driver, isGroup):
+    def __find_marketplace(post, driver, layout):
         """finds market place of the facebook post using selenium's webdriver's method"""
         try:
             if layout == "old":
                 raise NotImplementedError()
             elif layout == "new":
-                marketplace_link_element = post.find_element_by_css_selector('a[href*="/marketplace/"]')
+                link_element = post.find_element_by_css_selector('a[href*="/marketplace/"]')
 
-                link = marketplace_link_element.get_attribute('href')
+                link = link_element.get_attribute('href').split('?')[0]
                 try:
-                    title = link.find_element_by_css_selector('span.html-span').get_attribute('textContent')
+                    title = link_element.find_element_by_css_selector('span.html-span').get_attribute('textContent')
                 except NoSuchElementException:
                     title = None
 
                 try:
-                    price = link.find_element_by_css_selector('span:not([class])').get_attribute('textContent')
+                    price = link_element.find_element_by_css_selector('span:not([class])').get_attribute('textContent')
                 except NoSuchElementException:
                     price = None
                 return {

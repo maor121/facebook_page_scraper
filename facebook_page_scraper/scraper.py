@@ -252,8 +252,8 @@ class Facebook_scraper:
                     post, self.__layout, link_element, self.__driver, self.isGroup)
 
                 # extract market place
-                marketplace = Finder.__Finder__find_marketplace(
-                    post, self.__layout, self.__driver, self.isGroup
+                marketplace = Finder._Finder__find_marketplace(
+                    post, self.__driver, self.__layout
                 )
 
                 # NOTE below is  additional fields to scrape, all of which have not been thoroughly tested for groups
