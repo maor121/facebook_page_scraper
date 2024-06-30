@@ -234,6 +234,8 @@ class Facebook_scraper:
                     print("no post_url, skipping")
                     continue
 
+                self.__handle_popup(self.__layout)
+
                 # Split the URL on the '?' character, to detach the referer or uneeded query info
                 parts = post_url.split('?')
                 # The first part of the list is the URL up to the '?'
