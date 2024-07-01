@@ -221,10 +221,10 @@ class Facebook_scraper:
 
         # iterate over all the posts and find details from the same
         for post in all_posts:
-            max_delta = 100
-            duration = random.uniform(0.2, 1.2)
-            delta_x, delya_y = random.randint(-max_delta, max_delta), random.randint(-max_delta, max_delta)
-            pyautogui.moveRel(delta_x, delya_y, duration=duration)
+            # max_delta = 100
+            # duration = random.uniform(0.2, 1.2)
+            # delta_x, delya_y = random.randint(-max_delta, max_delta), random.randint(-max_delta, max_delta)
+            # pyautogui.moveRel(delta_x, delya_y, duration=duration)
 
             try:
                 # find post ID from post

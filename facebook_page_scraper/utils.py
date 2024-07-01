@@ -147,7 +147,8 @@ def parse_datetime(text: str, search=True) -> Optional[datetime]:
                 # Fix for dateparser misinterpreting "last Monday" as today if today is Monday
                 return dateparser.parse(text, settings=settings) - timedelta(days=7)
 
-    result = dateparser.parse(text, settings=settings)
+    text = text.replace("דקה אחת", "1 min").replace("דק'", "mins")
+    result = dateparser.parse(text)   #, settings=settings)
     if result:
         return result.replace(microsecond=0)
     return None

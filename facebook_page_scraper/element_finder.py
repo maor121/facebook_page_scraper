@@ -6,11 +6,9 @@ import re
 import sys
 import time
 import urllib.request
+from typing import List, Union
 
-import dateutil
 import pyautogui
-import pygetwindow
-import selenium
 from dateutil.parser import parse
 from selenium.common.exceptions import NoSuchElementException, TimeoutException
 from selenium.webdriver.common.by import By
@@ -27,6 +25,31 @@ format = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s
 ch = logging.StreamHandler()
 ch.setFormatter(format)
 logger.addHandler(ch)
+
+
+def nested_get(post_json, nested_key):
+    assert isinstance(nested_key, list)
+    if len(nested_key) == 1:
+        return post_json[nested_key[0]]
+    return nested_get(post_json[nested_key[0]], nested_key[1:])
+
+
+def find_nested_keys(post_json, key: str) -> List[List[Union[int, str]]]:
+    found_keys = []
+    if isinstance(post_json, list):
+        for i, v in enumerate(post_json):
+            res = find_nested_keys(v, key)
+            if len(res) > 0:
+                found_keys.extend([[i] + r for r in res])
+    elif isinstance(post_json, dict):
+        if key in post_json.keys():
+            found_keys.append([key])
+
+        for k, v in post_json.items():
+            res = find_nested_keys(v, key)
+            if len(res) > 0:
+                found_keys.extend([[k] + r for r in res])
+    return found_keys
 
 
 class Finder:
@@ -368,7 +391,7 @@ class Finder:
                 return None
 
     @staticmethod
-    def __find_posted_time(post, layout, link_element, driver, isGroup):
+    def __find_posted_time(post, layout, link_element, driver, isGroup, how='fuzzy'):
         """finds posted time of the facebook post using selenium's webdriver's method"""
         try:
             # extract element that looks like <abbr class='_5ptz' data-utime="some unix timestamp"> </abbr>
@@ -409,20 +432,59 @@ class Finder:
                     # Execute the script with the link_element as the argument
                     #timestamp = driver.execute_script(js_script, link_element)
 
-                    # Execute JavaScript to scroll the element into the middle of the view
-                    #driver.maximize_window()
-                    loc_x, loc_y = translate_element_loc_to_absolute_loc(driver, link_element)
+                    # Based on https://stackoverflow.com/questions/77540906/where-does-the-timestamp-of-a-facebooks-post-article-is-fetched-from
+                    # Only works for first post
+                    # post_script_elems = post.find_elements(
+                    #     By.XPATH,
+                    #     '//script[contains(text(), "ScheduledServerJSWithCSS") and contains(text(), "image")]')
+                    # post_script_jsons = [json.loads(p.get_attribute('innerText')) for p in post_script_elems]
+                    # timestamp_new = None
+                    # for post_json in post_script_jsons:
+                    #     nested_keys = find_nested_keys(post_json, 'creation_time')
+                    #     if len(nested_keys) > 0:
+                    #         for nested_key in nested_keys:
+                    #             tmp_timestamp = nested_get(post_json, nested_key)
+                    #             tmp_story_key = nested_key[:-1]
+                    #             tmp_story_url = nested_get(post_json, tmp_story_key + ["url"])
+                    #
+                    #             print("Timestamp: %s of post: %s" % (tmp_timestamp, tmp_story_url))
+                    #         for nested_key in nested_keys:
+                    #             tmp_timestamp = nested_get(post_json, nested_key)
+                    #             tmp_story_key = nested_key[:-1]
+                    #             tmp_story_url = nested_get(post_json, tmp_story_key + ["url"])
+                    #
+                    #             if post_id in tmp_story_url:
+                    #                 timestamp_new = datetime.datetime.fromtimestamp(tmp_timestamp).isoformat()
+                    #                 break
+                    #     if timestamp_new:
+                    #         break
 
-                    duration = random.uniform(0.2, 1.2)
-                    # Bring window to front (Needed for the FB tooltip to be visible)
-                    bring_browser_to_front(driver)   # UGLY!
-                    pyautogui.moveTo(loc_x, loc_y, duration=duration)
-                    time.sleep(0.4)
-                    tooltip_element = driver.find_element(By.CLASS_NAME, "__fb-dark-mode")
-                    tooltip_text = tooltip_element.text
+                    if how == 'exact':
+                        # Move mouse over element (FB will detect it as bot eventually)
+                        loc_x, loc_y = translate_element_loc_to_absolute_loc(driver, link_element)
 
-                    timestamp = utils.parse_datetime(tooltip_text).isoformat()
+                        duration = random.uniform(0.2, 1.2)
+                        # Bring window to front (Needed for the FB tooltip to be visible)
+                        bring_browser_to_front(driver)  # UGLY!
+                        pyautogui.moveTo(loc_x, loc_y, duration=duration)
+                        time.sleep(0.4)
+                        tooltip_element = driver.find_element(By.CLASS_NAME, "__fb-dark-mode")
+                        tooltip_text = tooltip_element.text
 
+                        timestamp = utils.parse_datetime(tooltip_text)
+                    elif how == 'fuzzy':
+                        # Extract timestamp from link text without mouseover (not exact)
+                        aria_label_value = link_element.get_attribute("aria-label")
+                        timestamp = utils.parse_datetime(aria_label_value)
+
+                        if timestamp is None:
+                            print("Error parsing fuzzy timestamp, please fix:")
+                            print(aria_label_value)
+                            exit()
+                    else:
+                         raise NotImplementedError()
+
+                    timestamp = timestamp.isoformat()
                     print("TIMESTAMP: " + str(timestamp))
                 elif not isGroup:
                     aria_label_value = link_element.get_attribute("aria-label")

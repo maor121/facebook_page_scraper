@@ -128,13 +128,13 @@ class Utilities:
                         if popup_count == BLOCKED_POPUP_COUNT:
                             raise TemporarilyBanned()
 
-                        bring_browser_to_front(driver)
-                        loc_x, loc_y = translate_element_loc_to_absolute_loc(driver, close_button)
-                        duration = random.uniform(0.2, 1.2)
-                        pyautogui.moveTo(loc_x, loc_y, duration=duration)
-                        pyautogui.click()
+                        # bring_browser_to_front(driver)
+                        # loc_x, loc_y = translate_element_loc_to_absolute_loc(driver, close_button)
+                        # duration = random.uniform(0.2, 1.2)
+                        # pyautogui.moveTo(loc_x, loc_y, duration=duration)
+                        # pyautogui.click()
 
-                        # close_button.click()
+                        close_button.click()
                         break
                     except NoSuchElementException as ex:
                         pass
