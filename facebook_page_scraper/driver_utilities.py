@@ -106,8 +106,7 @@ class Utilities:
 
     @staticmethod
     def __close_modern_layout_signup_modal(driver):
-
-        BLOCKED_POPUP_COUNT = 3
+        BLOCKED_POPUP_COUNT = 4
 
         popup_count = 0
         try:
@@ -141,6 +140,8 @@ class Utilities:
                 if found_popup:
                     time.sleep(1)
                     # try again
+        except TemporarilyBanned as e:
+            raise e
         except Exception as ex:
             logger.exception(
                 "Error at close_modern_layout_signup_modal: {}".format(ex))

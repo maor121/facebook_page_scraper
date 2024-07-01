@@ -12,6 +12,7 @@ import pyautogui
 from .driver_initialization import Initializer
 from .driver_utilities import Utilities
 from .element_finder import Finder
+from .exceptions import TemporarilyBanned
 from .proxy_ext import BrowserExtension
 from .scraping_utilities import Scraping_utilities
 
@@ -85,7 +86,8 @@ class Facebook_scraper:
                     self.__driver)
                 Utilities._Utilities__close_cookie_consent_modern_layout(
                     self.__driver)
-
+        except TemporarilyBanned as e:
+            raise e
         except Exception as ex:
             logger.exception("Error at handle_popup : {}".format(ex))
 
