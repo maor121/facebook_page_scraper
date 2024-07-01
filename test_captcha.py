@@ -6,7 +6,6 @@ from selenium.webdriver.common.by import By
 
 from facebook_page_scraper import Initializer
 from facebook_page_scraper.driver_utilities import translate_element_loc_to_absolute_loc
-from facebook_page_scraper.mouse_utils import MouseUtils
 
 
 def test_captcha(url, button_func, response_func):
@@ -22,9 +21,7 @@ def test_captcha(url, button_func, response_func):
         duration = random.uniform(0.2, 1.2)
 
         loc_x, loc_y = translate_element_loc_to_absolute_loc(driver, captcha_link)
-        #pyautogui.moveTo(loc_x + 30, loc_y, duration=duration)
-        MouseUtils().move_to((loc_x + 30, loc_y), mouseSpeed="medium")
-        # time.sleep(0.2)
+        pyautogui.moveTo(loc_x + 30, loc_y, duration=duration)
         pyautogui.click()
         time.sleep(5)
 
@@ -47,5 +44,11 @@ def test_captcha2():
                  lambda driver: driver.find_elements(By.XPATH, "//code")[0].get_attribute('innerText'))
 
 
+def test_captcha3():
+    test_captcha("https://antcpt.com/score_detector/",
+                 lambda driver: driver.find_elements(By.XPATH, "//button")[0],
+                 lambda driver: driver.find_elements(By.XPATH, "//big")[0].get_attribute('innerText'))
+
+
 if __name__ == "__main__":
-    test_captcha2()
+    test_captcha3()

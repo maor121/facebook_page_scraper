@@ -15,6 +15,8 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
+from facebook_page_scraper.exceptions import TemporarilyBanned
+
 logger = logging.getLogger(__name__)
 format = logging.Formatter(
     "%(asctime)s - %(name)s - %(levelname)s - %(message)s")
@@ -104,27 +106,41 @@ class Utilities:
 
     @staticmethod
     def __close_modern_layout_signup_modal(driver):
+
+        BLOCKED_POPUP_COUNT = 3
+
+        popup_count = 0
         try:
-            # driver.execute_script(
-            #     "window.scrollTo(0, document.body.scrollHeight);")
-            close_text_options = ["Close", "סגירה"]
-            for text in close_text_options:
-                try:
-                    close_button = driver.find_element(
-                        By.CSS_SELECTOR, f'[aria-label="{text}"]')
+            found_popup = True
+            while found_popup:
+                # driver.execute_script(
+                #     "window.scrollTo(0, document.body.scrollHeight);")
+                close_text_options = ["Close", "סגירה"]
+                found_popup = False
+                for text in close_text_options:
+                    try:
+                        close_button = driver.find_element(
+                            By.CSS_SELECTOR, f'[aria-label="{text}"]')
 
-                    bring_browser_to_front(driver)
-                    loc_x, loc_y = translate_element_loc_to_absolute_loc(driver, close_button)
-                    duration = random.uniform(0.2, 1.2)
-                    pyautogui.moveTo(loc_x, loc_y, duration=duration)
-                    pyautogui.click()
+                        found_popup = True
+                        popup_count += 1
 
-                    # close_button.click()
-                    break
-                except NoSuchElementException as ex:
-                    pass
-        except NoSuchElementException:
-            pass
+                        if popup_count == BLOCKED_POPUP_COUNT:
+                            raise TemporarilyBanned()
+
+                        bring_browser_to_front(driver)
+                        loc_x, loc_y = translate_element_loc_to_absolute_loc(driver, close_button)
+                        duration = random.uniform(0.2, 1.2)
+                        pyautogui.moveTo(loc_x, loc_y, duration=duration)
+                        pyautogui.click()
+
+                        # close_button.click()
+                        break
+                    except NoSuchElementException as ex:
+                        pass
+                if found_popup:
+                    time.sleep(1)
+                    # try again
         except Exception as ex:
             logger.exception(
                 "Error at close_modern_layout_signup_modal: {}".format(ex))

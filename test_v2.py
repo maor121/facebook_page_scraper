@@ -1,7 +1,7 @@
 import time
 
 import facebook_page_scraper
-from facebook_page_scraper.exceptions import LoginRequired
+from facebook_page_scraper.exceptions import LoginRequired, TemporarilyBanned
 from facebook_page_scraper.proxy_ext import ProxyAuthChromeExtension
 
 
@@ -14,6 +14,9 @@ def retry_wrapper(func, retry_count=3, sleep_time=3):
         except LoginRequired:
             print("LoginRequired")
             time.sleep(sleep_time)
+        except TemporarilyBanned:
+            print("TemporarilyBanned")
+            break
         except Exception as e:
             print(f"Error: {e}")
             time.sleep(sleep_time)
@@ -39,7 +42,7 @@ if __name__ == "__main__":
         scrape_start = time.time()
         print("Scraping group:", group_id)
 
-        group = facebook_page_scraper.Facebook_scraper(f"{group_id}",40,"chrome",
+        group = facebook_page_scraper.Facebook_scraper(f"{group_id}",70,"chrome",
                                                        isGroup=True,  headless=False, extensions=[proxy_extension],
                                                        #browser_args=["--incognito"]
                                                        browser_args=["--lang=he"],
