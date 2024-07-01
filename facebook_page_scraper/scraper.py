@@ -13,7 +13,7 @@ from .driver_initialization import Initializer
 from .driver_utilities import Utilities
 from .element_finder import Finder
 from .exceptions import TemporarilyBanned
-from .proxy_ext import BrowserExtension
+from .browser_ext import BrowserExtension, HttpStatusExtention
 from .scraping_utilities import Scraping_utilities
 
 logger = logging.getLogger(__name__)
@@ -62,6 +62,7 @@ class Facebook_scraper:
         self.username = username
         self.password = password
         self.extensions = extensions
+        assert any([isinstance(e, HttpStatusExtention) for e in extensions]) and browser == 'chrome'
         self.browser_args = browser_args
         self.browser_exp_options = browser_exp_options
         self.__data_dict = {}  # this dictionary stores all post's data
@@ -100,6 +101,10 @@ class Facebook_scraper:
         starting_time = time.time()
         # navigate to URL
         self.__driver.get(self.URL)
+        http_status_code = int(self.__driver.get_cookie("status-code")['value'])
+        if http_status_code != 200:
+            raise Exception(f"HTTP status code: {http_status_code}")
+
         # only login if username is provided
         self.username is not None and Finder._Finder__login(self.__driver, self.username, self.password)
         Finder._Finder__accept_cookies(self.__driver)
@@ -358,6 +363,8 @@ class Facebook_scraper:
                     **({"posted_on": posted_time}), #if not self.isGroup else {}),
                     **({"video": video} if not self.isGroup else {}),
                 }
+            except TemporarilyBanned as e:
+                raise e
             except Exception as ex:
                 logger.exception(
                     "Error at find_elements method : {}".format(ex))

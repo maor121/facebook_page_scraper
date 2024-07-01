@@ -10,7 +10,7 @@ from webdriver_manager.chrome import ChromeDriverManager
 from webdriver_manager.firefox import GeckoDriverManager
 import logging
 
-from facebook_page_scraper.proxy_ext import BrowserExtension
+from facebook_page_scraper.browser_ext import BrowserExtension
 
 logger = logging.getLogger(__name__)
 format = logging.Formatter(
