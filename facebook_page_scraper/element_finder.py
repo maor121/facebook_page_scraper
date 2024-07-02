@@ -501,6 +501,9 @@ class Finder:
         except TypeError:
             timestamp = None
         except Exception as ex:
+            if how == "exact":
+                logger.info("Error at find_posted_time exact, trying fuzzy instead")
+                return Finder.__find_posted_time(post, layout, link_element, driver, isGroup, how='fuzzy')
             logger.exception("Error at find_posted_time method : {}".format(ex))
             timestamp = None
             return timestamp
