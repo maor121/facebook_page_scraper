@@ -113,7 +113,7 @@ class Facebook_scraper:
     def __check_timeout(self, start_time, current_time):
         return (current_time-start_time) > self.timeout
 
-    def scrap_to_json(self):
+    def scrap_generator(self):
         self.end_condition_reached = False
 
         # call the __start_driver and override class member __driver to webdriver's instance
@@ -142,7 +142,8 @@ class Facebook_scraper:
         while not self.end_condition_reached and elements_have_loaded:
             self.__handle_popup(self.__layout)
             # self.__find_elements(name)
-            self.__find_elements()
+            for post in self.__find_elements_generator():
+                yield post
             current_time = time.time()
             if self.__check_timeout(starting_time, current_time) is True:
                 logger.setLevel(logging.INFO)
@@ -153,6 +154,9 @@ class Facebook_scraper:
         # close the browser window after job is done.
         Utilities._Utilities__close_driver(self.__driver)
 
+    def scrap_to_json(self):
+        for post in self.scrap_generator():
+            pass
         return json.dumps(self.__data_dict, ensure_ascii=False, cls=DateTimeEncoder)
 
     def __json_to_csv(self, filename, json_data, directory):
@@ -233,7 +237,7 @@ class Facebook_scraper:
             # if length of posts is 0,decrement retry by 1
             self.retry -= 1
 
-    def __find_elements(self):
+    def __find_elements_generator(self):
         """find elements of posts and add them to data_dict"""
         all_posts = Finder._Finder__find_all_posts(
             self.__driver, self.__layout, self.isGroup)  # find all posts
@@ -254,7 +258,7 @@ class Facebook_scraper:
                     continue
 
                 # the bug where we repeat links & hover mouse over random links helps avoid being blocked
-                skip_this_one = status in self.__data_dict
+                already_exists = status in self.__data_dict
 
                 self.__handle_popup(self.__layout)
 
@@ -363,7 +367,7 @@ class Facebook_scraper:
 
                 # post_url = "https://www.facebook.com/{}/posts/{}".format(self.page_or_group_name,status)
 
-                if skip_this_one:
+                if already_exists:
                     continue
 
                 self.__data_dict[status] = {
@@ -381,6 +385,8 @@ class Facebook_scraper:
                     **({"posted_on": posted_time}), #if not self.isGroup else {}),
                     **({"video": video} if not self.isGroup else {}),
                 }
+
+                yield self.__data_dict[status]
             except TemporarilyBanned as e:
                 logger.exception("TemporarilyBanned : {}".format(e))
                 self.end_condition_reached = True
