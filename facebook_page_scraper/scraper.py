@@ -153,7 +153,7 @@ class Facebook_scraper:
         # close the browser window after job is done.
         Utilities._Utilities__close_driver(self.__driver)
 
-        return json.dumps(self.__data_dict, ensure_ascii=False, cls=DateTimeEncoder), self.end_condition_reached
+        return json.dumps(self.__data_dict, ensure_ascii=False, cls=DateTimeEncoder)
 
     def __json_to_csv(self, filename, json_data, directory):
 
@@ -251,6 +251,8 @@ class Facebook_scraper:
                     post, self.__layout, self.isGroup)
                 if post_url is None:
                     print("no post_url, skipping")
+                    continue
+                if status is None or status in self.__data_dict:
                     continue
 
                 self.__handle_popup(self.__layout)
@@ -396,7 +398,7 @@ class Facebook_scraper:
         date_passed_count = 0
         n_days_ago = dateparser.parse("%d days" % self.max_days_back)
         for post_id, post_data in self.__data_dict.items():
-            if post_data['posted_on'] and post_data['posted_on'] >= n_days_ago:
+            if post_data['posted_on'] and n_days_ago >= post_data['posted_on']:
                 date_passed_count += 1
             if date_passed_count >= self.max_hit_back_count:
                 self.end_condition_reached = True
