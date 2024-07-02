@@ -371,6 +371,7 @@ class Facebook_scraper:
                     continue
 
                 self.__data_dict[status] = {
+                    'post_id': status,
                     "name": name,
                     "name_link": name_link,
                     "content": post_contents,
