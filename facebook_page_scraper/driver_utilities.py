@@ -252,4 +252,4 @@ class Utilities:
           allow_span.click()
         except Exception as ex:
             #if not found, that's fine silently just log thing do not stop
-            logger.info('The Cookie Consent Prompt was not found!: ', ex)
+            logger.debug('The Cookie Consent Prompt was not found!: ', ex)
