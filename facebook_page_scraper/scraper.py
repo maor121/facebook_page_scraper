@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
 import csv
+import datetime
 import json
 import logging
 import os
-import random
 import time
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Set
 
+import dateparser
+import numpy as np
 import pyautogui
 
 from .driver_initialization import Initializer
@@ -22,6 +24,15 @@ format = logging.Formatter(
 ch = logging.StreamHandler()
 ch.setFormatter(format)
 logger.addHandler(ch)
+
+
+class DateTimeEncoder(json.JSONEncoder):
+    def default(self, o):
+        if isinstance(o, datetime.datetime):
+            return o.isoformat()
+
+        return json.JSONEncoder.default(self, o)
+
 
 class Facebook_scraper:
 
@@ -44,12 +55,19 @@ class Facebook_scraper:
     # on each iteration __close_after_retry is called to check if retry have turned to 0
     # if it returns true,it will break the loop. After coming out of loop,driver will be closed and it will return post whatever was found
 
-    def __init__(self, page_or_group_name, posts_count=10, browser="chrome", proxy=None, 
+    def __init__(self, page_or_group_name, browser="chrome", proxy=None,
                  timeout=600, headless=True, isGroup=False, username=None, password=None,
                  extensions: List[BrowserExtension] = [], browser_args: List[str] = [],
-                 browser_exp_options: Dict[str, Any] = {}):
+                 browser_exp_options: Dict[str, Any] = {},
+                 already_scraped_post_ids: Set[str] = set(),
+                 max_days_back=4,
+                 max_posts_to_scrape=None,
+                 max_hit_back_count = 10):
         self.page_or_group_name = page_or_group_name
-        self.posts_count = int(posts_count)
+        self.max_posts_to_scrape = int(max_posts_to_scrape) if max_posts_to_scrape else np.inf
+        self.already_scraped_post_ids = already_scraped_post_ids
+        self.max_days_back = max_days_back
+        self.max_hit_back_count = max_hit_back_count
         #self.URL = "https://en-gb.facebook.com/pg/{}/posts".format(self.page_or_group_name)
         self.URL = "https://facebook.com/{}".format(self.page_or_group_name)
         self.browser = browser
@@ -96,6 +114,8 @@ class Facebook_scraper:
         return (current_time-start_time) > self.timeout
 
     def scrap_to_json(self):
+        self.end_condition_reached = False
+
         # call the __start_driver and override class member __driver to webdriver's instance
         self.__start_driver()
         starting_time = time.time()
@@ -119,7 +139,7 @@ class Facebook_scraper:
         Utilities._Utilities__scroll_down(self.__driver, self.__layout)
         self.__handle_popup(self.__layout)
 
-        while len(self.__data_dict) < self.posts_count and elements_have_loaded:
+        while not self.end_condition_reached and elements_have_loaded:
             self.__handle_popup(self.__layout)
             # self.__find_elements(name)
             self.__find_elements()
@@ -132,11 +152,8 @@ class Facebook_scraper:
                 self.__driver, self.__layout)  # scroll down
         # close the browser window after job is done.
         Utilities._Utilities__close_driver(self.__driver)
-        # dict trimming, might happen that we find more posts than it was asked, so just trim it
-        self.__data_dict = dict(list(self.__data_dict.items())[
-                                0:int(self.posts_count)])
 
-        return json.dumps(self.__data_dict, ensure_ascii=False)
+        return json.dumps(self.__data_dict, ensure_ascii=False, cls=DateTimeEncoder), self.end_condition_reached
 
     def __json_to_csv(self, filename, json_data, directory):
 
@@ -228,11 +245,6 @@ class Facebook_scraper:
 
         # iterate over all the posts and find details from the same
         for post in all_posts:
-            # max_delta = 100
-            # duration = random.uniform(0.2, 1.2)
-            # delta_x, delya_y = random.randint(-max_delta, max_delta), random.randint(-max_delta, max_delta)
-            # pyautogui.moveRel(delta_x, delya_y, duration=duration)
-
             try:
                 # find post ID from post
                 status, post_url, link_element = Finder._Finder__find_status(
@@ -364,7 +376,27 @@ class Facebook_scraper:
                     **({"video": video} if not self.isGroup else {}),
                 }
             except TemporarilyBanned as e:
-                raise e
+                logger.exception("TemporarilyBanned : {}".format(e))
+                self.end_condition_reached = True
+                break
             except Exception as ex:
                 logger.exception(
                     "Error at find_elements method : {}".format(ex))
+
+        # Max posts to scrape end condition
+        if self.max_posts_to_scrape and len(self.__data_dict) >= self.max_posts_to_scrape:
+            self.end_condition_reached = True
+
+        # Posts in cache end condition
+        scraped_in_cache = set(self.__data_dict.keys()) & self.already_scraped_post_ids
+        if len(scraped_in_cache) >= self.max_hit_back_count:
+            self.end_condition_reached = True
+
+        # N days ago end condition
+        date_passed_count = 0
+        n_days_ago = dateparser.parse("%d days" % self.max_days_back)
+        for post_id, post_data in self.__data_dict.items():
+            if post_data['posted_on'] and post_data['posted_on'] >= n_days_ago:
+                date_passed_count += 1
+            if date_passed_count >= self.max_hit_back_count:
+                self.end_condition_reached = True

@@ -9,6 +9,7 @@ import urllib.request
 from typing import List, Union
 
 import pyautogui
+import selenium
 from dateutil.parser import parse
 from selenium.common.exceptions import NoSuchElementException, TimeoutException
 from selenium.webdriver.common.by import By
@@ -119,6 +120,9 @@ class Finder:
                         if status_link and status != "NA": #early exit for non group
                             return (status, status_link, link)
 
+        except selenium.common.exceptions.StaleElementReferenceException:
+            logger.info("StaleElement: Continue")
+            status = "NA"
         except NoSuchElementException:
             # if element is not found
             status = "NA"
@@ -127,8 +131,6 @@ class Finder:
             logger.exception("Error at find_status method : {}".format(ex))
             status = "NA"
         return (status, status_link, link)
-
-
 
     @staticmethod
     def __find_share(post, layout):
@@ -358,7 +360,7 @@ class Finder:
         if layout == "old":
             raise NotImplementedError()
         elif layout == "new":
-            link_elements = post.find_elements_by_css_selector('a[href*="/marketplace/"]')
+            link_elements = post.find_elements(By.CSS_SELECTOR, 'a[href*="/marketplace/"]')
 
             if len(link_elements) > 0:
                 links = [l.get_attribute('href').split('?')[0] for l in link_elements]
@@ -391,7 +393,7 @@ class Finder:
                 return None
 
     @staticmethod
-    def __find_posted_time(post, layout, link_element, driver, isGroup, how='fuzzy'):
+    def __find_posted_time(post, layout, link_element, driver, isGroup, how='exact'):
         """finds posted time of the facebook post using selenium's webdriver's method"""
         try:
             # extract element that looks like <abbr class='_5ptz' data-utime="some unix timestamp"> </abbr>
@@ -484,24 +486,23 @@ class Finder:
                     else:
                          raise NotImplementedError()
 
-                    timestamp = timestamp.isoformat()
-                    print("TIMESTAMP: " + str(timestamp))
+                    print("TIMESTAMP: " + str(timestamp.isoformat()))
                 elif not isGroup:
                     aria_label_value = link_element.get_attribute("aria-label")
                     timestamp = (
-                        parse(aria_label_value).isoformat()
-                        if len(aria_label_value) > 5
-                        else Scraping_utilities._Scraping_utilities__convert_to_iso(
-                            aria_label_value
-                        )
+                        parse(aria_label_value)#.isoformat()
+                        # if len(aria_label_value) > 5
+                        # else Scraping_utilities._Scraping_utilities__convert_to_iso(
+                        #     aria_label_value
+                        # )
                     )
                 return timestamp
 
         except TypeError:
-            timestamp = ""
+            timestamp = None
         except Exception as ex:
             logger.exception("Error at find_posted_time method : {}".format(ex))
-            timestamp = ""
+            timestamp = None
             return timestamp
 
     @staticmethod
