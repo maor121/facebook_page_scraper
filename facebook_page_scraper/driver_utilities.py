@@ -2,11 +2,9 @@
 
 import logging
 import random
-import sys
 import time
 from random import randint
 
-import pyautogui
 import pygetwindow
 from selenium.common.exceptions import (NoSuchElementException,
                                         WebDriverException)

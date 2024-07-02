@@ -60,7 +60,7 @@ class Facebook_scraper:
                  extensions: List[BrowserExtension] = [], browser_args: List[str] = [],
                  browser_exp_options: Dict[str, Any] = {},
                  already_scraped_post_ids: Set[str] = set(),
-                 max_days_back=4,
+                 max_days_back=None,
                  max_posts_to_scrape=None,
                  max_hit_back_count = 10):
         self.page_or_group_name = page_or_group_name
@@ -252,8 +252,9 @@ class Facebook_scraper:
                 if post_url is None:
                     print("no post_url, skipping")
                     continue
-                if status is None or status in self.__data_dict:
-                    continue
+
+                # the bug where we repeat links & hover mouse over random links helps avoid being blocked
+                skip_this_one = status in self.__data_dict
 
                 self.__handle_popup(self.__layout)
 
@@ -362,6 +363,9 @@ class Facebook_scraper:
 
                 # post_url = "https://www.facebook.com/{}/posts/{}".format(self.page_or_group_name,status)
 
+                if skip_this_one:
+                    continue
+
                 self.__data_dict[status] = {
                     "name": name,
                     "name_link": name_link,
@@ -386,19 +390,22 @@ class Facebook_scraper:
                     "Error at find_elements method : {}".format(ex))
 
         # Max posts to scrape end condition
-        if self.max_posts_to_scrape and len(self.__data_dict) >= self.max_posts_to_scrape:
-            self.end_condition_reached = True
+        if self.max_posts_to_scrape:
+            if self.max_posts_to_scrape and len(self.__data_dict) >= self.max_posts_to_scrape:
+                self.end_condition_reached = True
 
         # Posts in cache end condition
-        scraped_in_cache = set(self.__data_dict.keys()) & self.already_scraped_post_ids
-        if len(scraped_in_cache) >= self.max_hit_back_count:
-            self.end_condition_reached = True
+        if self.already_scraped_post_ids:
+            scraped_in_cache = set(self.__data_dict.keys()) & self.already_scraped_post_ids
+            if len(scraped_in_cache) >= self.max_hit_back_count:
+                self.end_condition_reached = True
 
         # N days ago end condition
-        date_passed_count = 0
-        n_days_ago = dateparser.parse("%d days" % self.max_days_back)
-        for post_id, post_data in self.__data_dict.items():
-            if post_data['posted_on'] and n_days_ago >= post_data['posted_on']:
-                date_passed_count += 1
-            if date_passed_count >= self.max_hit_back_count:
-                self.end_condition_reached = True
+        if self.max_days_back:
+            date_passed_count = 0
+            n_days_ago = dateparser.parse("%d days" % self.max_days_back)
+            for post_id, post_data in self.__data_dict.items():
+                if post_data['posted_on'] and n_days_ago >= post_data['posted_on']:
+                    date_passed_count += 1
+                if date_passed_count >= self.max_hit_back_count:
+                    self.end_condition_reached = True
