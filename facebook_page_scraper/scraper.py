@@ -399,12 +399,16 @@ class Facebook_scraper:
         # Max posts to scrape end condition
         if self.max_posts_to_scrape:
             if self.max_posts_to_scrape and len(self.__data_dict) >= self.max_posts_to_scrape:
+                logger.info("Scraper end condition reached: Max posts to scrape. scraped: %d, max: %d" %
+                            (len(self.__data_dict), self.max_posts_to_scrape))
                 self.end_condition_reached = True
 
         # Posts in cache end condition
         if self.already_scraped_post_ids:
             scraped_in_cache = set(self.__data_dict.keys()) & self.already_scraped_post_ids
             if len(scraped_in_cache) >= self.max_hit_back_count:
+                logger.info("Scraper end condition reached: Max posts in cache. already in cache: %d, max: %d" %
+                            (len(scraped_in_cache), self.max_hit_back_count))
                 self.end_condition_reached = True
 
         # N days ago end condition
@@ -415,4 +419,6 @@ class Facebook_scraper:
                 if post_data['posted_on'] and n_days_ago >= post_data['posted_on']:
                     date_passed_count += 1
                 if date_passed_count >= self.max_hit_back_count:
+                    logger.info("Scraper end condition reached: Max days back. posts from %d days ago: %d, max: %d" %
+                                (self.max_days_back, date_passed_count, self.max_hit_back_count))
                     self.end_condition_reached = True
