@@ -251,5 +251,10 @@ class Utilities:
              By.XPATH, '//div[contains(@aria-label, "Allow")]/../following-sibling::div')
           allow_span.click()
         except Exception as ex:
-            #if not found, that's fine silently just log thing do not stop
             logger.debug('The Cookie Consent Prompt was not found!: ', ex)
+            try:
+                driver.find_element(By.XPATH, '//span[contains(text(), "דחיית קובצי Cookie")]').click()
+            except Exception as ex2:
+                #if not found, that's fine silently just log thing do not stop
+                logger.debug('The Cookie Consent Prompt was not found!: ', ex2)
+
