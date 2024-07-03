@@ -118,41 +118,46 @@ class Facebook_scraper:
 
         # call the __start_driver and override class member __driver to webdriver's instance
         self.__start_driver()
-        starting_time = time.time()
-        # navigate to URL
-        self.__driver.get(self.URL)
-        http_status_code = int(self.__driver.get_cookie("status-code")['value'])
-        if http_status_code != 200:
-            raise Exception(f"HTTP status code: {http_status_code}")
 
-        # only login if username is provided
-        self.username is not None and Finder._Finder__login(self.__driver, self.username, self.password)
-        Finder._Finder__accept_cookies(self.__driver)
-        self.__layout = Finder._Finder__detect_ui(self.__driver)
-        # sometimes we get popup that says "your request couldn't be processed", however
-        # posts are loading in background if popup is closed, so call this method in case if it pops up.
-        Utilities._Utilities__close_error_popup(self.__driver)
-        # wait for post to load
-        elements_have_loaded = Utilities._Utilities__wait_for_element_to_appear(
-            self.__driver, self.__layout, self.timeout)
-        # scroll down to bottom most
-        Utilities._Utilities__scroll_down(self.__driver, self.__layout)
-        self.__handle_popup(self.__layout)
+        try:
+            starting_time = time.time()
+            # navigate to URL
+            self.__driver.get(self.URL)
+            http_status_code = int(self.__driver.get_cookie("status-code")['value'])
+            if http_status_code != 200:
+                raise Exception(f"HTTP status code: {http_status_code}")
 
-        while not self.end_condition_reached and elements_have_loaded:
+            # only login if username is provided
+            self.username is not None and Finder._Finder__login(self.__driver, self.username, self.password)
+            Finder._Finder__accept_cookies(self.__driver)
+            self.__layout = Finder._Finder__detect_ui(self.__driver)
+            # sometimes we get popup that says "your request couldn't be processed", however
+            # posts are loading in background if popup is closed, so call this method in case if it pops up.
+            Utilities._Utilities__close_error_popup(self.__driver)
+            # wait for post to load
+            elements_have_loaded = Utilities._Utilities__wait_for_element_to_appear(
+                self.__driver, self.__layout, self.timeout)
+            # scroll down to bottom most
+            Utilities._Utilities__scroll_down(self.__driver, self.__layout)
             self.__handle_popup(self.__layout)
-            # self.__find_elements(name)
-            for post in self.__find_elements_generator():
-                yield post
-            current_time = time.time()
-            if self.__check_timeout(starting_time, current_time) is True:
-                logger.setLevel(logging.INFO)
-                logger.info('Timeout...')
-                break
-            Utilities._Utilities__scroll_down(
-                self.__driver, self.__layout)  # scroll down
-        # close the browser window after job is done.
-        Utilities._Utilities__close_driver(self.__driver)
+
+            while not self.end_condition_reached and elements_have_loaded:
+                self.__handle_popup(self.__layout)
+                # self.__find_elements(name)
+                for post in self.__find_elements_generator():
+                    yield post
+                current_time = time.time()
+                if self.__check_timeout(starting_time, current_time) is True:
+                    logger.setLevel(logging.INFO)
+                    logger.info('Timeout...')
+                    break
+                Utilities._Utilities__scroll_down(
+                    self.__driver, self.__layout)  # scroll down
+        except Exception as e:
+            raise e
+        finally:
+            # close the browser window after job is done.
+            Utilities._Utilities__close_driver(self.__driver)
 
     def scrap_to_json(self):
         for post in self.scrap_generator():
@@ -388,10 +393,6 @@ class Facebook_scraper:
                 }
 
                 yield self.__data_dict[status]
-            except TemporarilyBanned as e:
-                logger.exception("TemporarilyBanned : {}".format(e))
-                self.end_condition_reached = True
-                break
             except Exception as ex:
                 logger.exception(
                     "Error at find_elements method : {}".format(ex))
