@@ -5,12 +5,14 @@ import json
 import logging
 import os
 import time
+from threading import Thread
 from typing import List, Dict, Any, Set
 
 import dateparser
 import numpy as np
 import pyautogui
 
+from play_gui import play_recording
 from .driver_initialization import Initializer
 from .driver_utilities import Utilities
 from .element_finder import Finder
@@ -113,6 +115,11 @@ class Facebook_scraper:
     def __check_timeout(self, start_time, current_time):
         return (current_time-start_time) > self.timeout
 
+    def scroll_down_job(self, rec_json):
+        self.__driver.fullscreen_window()
+        while not self.end_condition_reached:
+            play_recording(rec_json, number_of_plays=1, stop_condition=lambda: self.end_condition_reached)
+
     def scrap_generator(self):
         self.end_condition_reached = False
 
@@ -141,6 +148,10 @@ class Facebook_scraper:
             Utilities._Utilities__scroll_down(self.__driver, self.__layout)
             self.__handle_popup(self.__layout)
 
+            # start scrolling
+            t = Thread(target=self.scroll_down_job, args=('scroll_down_rec.txt',))
+            t.start()
+
             while not self.end_condition_reached and elements_have_loaded:
                 self.__handle_popup(self.__layout)
                 # self.__find_elements(name)
@@ -151,12 +162,13 @@ class Facebook_scraper:
                     logger.setLevel(logging.INFO)
                     logger.info('Timeout...')
                     break
-                Utilities._Utilities__scroll_down(
-                    self.__driver, self.__layout)  # scroll down
+                # Utilities._Utilities__scroll_down(
+                #     self.__driver, self.__layout)  # scroll down
         except Exception as e:
             raise e
         finally:
             # close the browser window after job is done.
+            self.end_condition_reached = True
             Utilities._Utilities__close_driver(self.__driver)
 
     def scrap_to_json(self):
@@ -282,7 +294,7 @@ class Facebook_scraper:
 
                 # extract time
                 posted_time = Finder._Finder__find_posted_time(
-                    post, self.__layout, link_element, self.__driver, self.isGroup)
+                    post, self.__layout, link_element, self.__driver, self.isGroup, how='fuzzy')
 
                 # extract market place
                 marketplace = Finder._Finder__find_marketplace(
