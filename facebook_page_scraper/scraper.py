@@ -278,7 +278,7 @@ class Facebook_scraper:
                 # the bug where we repeat links & hover mouse over random links helps avoid being blocked
                 already_exists = status in self.__data_dict
 
-                self.__handle_popup(self.__layout)
+                # self.__handle_popup(self.__layout)
 
                 # Split the URL on the '?' character, to detach the referer or uneeded query info
                 parts = post_url.split('?')
