@@ -57,7 +57,7 @@ class Facebook_scraper:
     # on each iteration __close_after_retry is called to check if retry have turned to 0
     # if it returns true,it will break the loop. After coming out of loop,driver will be closed and it will return post whatever was found
 
-    def __init__(self, page_or_group_name, browser="chrome", proxy=None,
+    def __init__(self, page_or_group_name, scroll_recording_json, browser="chrome", proxy=None,
                  timeout=600, headless=True, isGroup=False, username=None, password=None,
                  extensions: List[BrowserExtension] = [], browser_args: List[str] = [],
                  browser_exp_options: Dict[str, Any] = {},
@@ -82,6 +82,7 @@ class Facebook_scraper:
         self.username = username
         self.password = password
         self.extensions = extensions
+        self.scroll_recording_json = scroll_recording_json
         assert any([isinstance(e, HttpStatusExtention) for e in extensions]) and browser == 'chrome'
         self.browser_args = browser_args
         self.browser_exp_options = browser_exp_options
@@ -149,7 +150,7 @@ class Facebook_scraper:
             self.__handle_popup(self.__layout)
 
             # start scrolling
-            t = Thread(target=self.scroll_down_job, args=('scroll_down_rec.txt',))
+            t = Thread(target=self.scroll_down_job, args=(self.scroll_recording_json,))
             t.start()
 
             while not self.end_condition_reached and elements_have_loaded:
