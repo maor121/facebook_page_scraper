@@ -10,9 +10,8 @@ from typing import List, Dict, Any, Set
 
 import dateparser
 import numpy as np
-import pyautogui
 
-from play_gui import play_recording
+from .play_gui import play_recording
 from .driver_initialization import Initializer
 from .driver_utilities import Utilities
 from .element_finder import Finder
