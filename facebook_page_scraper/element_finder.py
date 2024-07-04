@@ -309,13 +309,31 @@ class Finder:
                 post_contents = post.find_elements(
                     By.CSS_SELECTOR, '[data-ad-preview="message"]'
                 )
+                if len(post_contents) == 0:
+                    # Fallback, in case data-ad-preview isn't found
+                    post_contents = post.find_elements(
+                        By.CSS_SELECTOR, "div[dir='auto'].html-div > div > :is(div, span)"
+                    )
+                    # if len(post_contents) == 0:
+                    #     logging.error("No post content found")
+                    #     bla.pause_condition_reached=True
+                    #     print()
+                    #     # exit()
                 for post_content in post_contents:
                     # if "See More" button exists
+                    selector1 = 'div[dir="auto"] > div[role]'
+                    selector2 = 'div[role="button"]'
+                    # if Finder._Finder__element_exists(post_content, selector1) and not \
+                    #     Finder._Finder__element_exists(post_content, selector2):
+                    #     # unexpected: selector2 missed something selector1 caught
+                    #     logging.error("Unexpected 'more' selection")
+                    #     bla.pause_condition_reached=True
+                    #     exit()
                     if Finder._Finder__element_exists(
-                        post_content, 'div[dir="auto"] > div[role]'
+                        post_content, selector2
                     ):
                         element = post_content.find_element(
-                            By.CSS_SELECTOR, 'div[dir="auto"] > div[role]'
+                            By.CSS_SELECTOR, selector2
                         )  # grab that element
                         if element.get_attribute("target"):
                             content = Finder._Finder__fetch_post_passage(
@@ -323,7 +341,7 @@ class Finder:
                             )
                         else:
                             Utilities._Utilities__click_see_more(
-                                driver, post_content, 'div[dir="auto"] > div[role]'
+                                driver, post_content, selector2
                             )
                             content2 = post_content.get_attribute(
                                 "innerText"

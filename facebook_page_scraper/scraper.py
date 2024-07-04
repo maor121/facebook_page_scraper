@@ -154,7 +154,7 @@ class Facebook_scraper:
             Utilities._Utilities__close_error_popup(self.__driver)
             # wait for post to load
             elements_have_loaded = Utilities._Utilities__wait_for_element_to_appear(
-                self.__driver, self.__layout, self.timeout)
+                self.__driver, self.__layout, timeout=5)
             # scroll down to bottom most
             Utilities._Utilities__scroll_down(self.__driver, self.__layout)
             self.__handle_popup(self.__layout)

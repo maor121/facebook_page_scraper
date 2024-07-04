@@ -200,14 +200,8 @@ class Utilities:
                     (By.CSS_SELECTOR, '.userContentWrapper')))
                 return True
             elif layout == "new":
-                try:
-                    WebDriverWait(driver, 3).until(
-                        EC.presence_of_element_located((By.CSS_SELECTOR, "[aria-posinset]")))
-                except TimeoutError:
-                    logger.info("ugly fix for other user agents")
-                    WebDriverWait(driver, timeout).until(
-                        EC.presence_of_element_located((By.CSS_SELECTOR, "div[role='feed']")))
-                    time.sleep(2)
+                WebDriverWait(driver, timeout).until(
+                    EC.presence_of_element_located((By.CSS_SELECTOR, "[aria-posinset]")))
                 print("new layout loaded")
 
                 return True
