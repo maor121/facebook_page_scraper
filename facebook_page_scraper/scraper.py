@@ -4,6 +4,7 @@ import datetime
 import json
 import logging
 import os
+import random
 import time
 from threading import Thread
 from typing import List, Dict, Any, Set
@@ -117,11 +118,21 @@ class Facebook_scraper:
 
     def scroll_down_job(self, rec_json):
         self.__driver.fullscreen_window()
+
+        start_in_sec = random.uniform(3, 7)
+        print("Start in %d seconds" % start_in_sec)
+        time.sleep(start_in_sec)
+
         while not self.end_condition_reached:
-            play_recording(rec_json, number_of_plays=1, stop_condition=lambda: self.end_condition_reached)
+            play_recording(rec_json,
+                           random_start=True,
+                           max_execute_sec=(15,20),
+                           pause_condition=lambda: self.pause_condition_reached,
+                           stop_condition=lambda: self.end_condition_reached)
 
     def scrap_generator(self):
         self.end_condition_reached = False
+        self.pause_condition_reached = False
 
         # call the __start_driver and override class member __driver to webdriver's instance
         self.__start_driver()
@@ -262,7 +273,12 @@ class Facebook_scraper:
 
          # remove duplicates from the list
         all_posts = self.__remove_duplicates(
-            all_posts) 
+            all_posts)
+
+        # pause scrolling if parsing posts doesnt keep up
+        self.pause_condition_reached = len(all_posts) > 15
+        if self.pause_condition_reached:
+            logging.info("Pausing scrolling due to too many posts to parse")
 
         # iterate over all the posts and find details from the same
         for post in all_posts:
@@ -276,6 +292,8 @@ class Facebook_scraper:
 
                 # the bug where we repeat links & hover mouse over random links helps avoid being blocked
                 already_exists = status in self.__data_dict
+                if already_exists:
+                    continue
 
                 self.__handle_popup(self.__layout)
 
@@ -383,9 +401,6 @@ class Facebook_scraper:
                 image = Finder._Finder__find_image_url(post, self.__layout)
 
                 # post_url = "https://www.facebook.com/{}/posts/{}".format(self.page_or_group_name,status)
-
-                if already_exists:
-                    continue
 
                 self.__data_dict[status] = {
                     'post_id': status,
