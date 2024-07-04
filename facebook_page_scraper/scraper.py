@@ -295,7 +295,7 @@ class Facebook_scraper:
                 if already_exists:
                     continue
 
-                self.__handle_popup(self.__layout)
+                # self.__handle_popup(self.__layout)
 
                 # Split the URL on the '?' character, to detach the referer or uneeded query info
                 parts = post_url.split('?')
