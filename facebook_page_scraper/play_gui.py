@@ -1,6 +1,7 @@
 """Play mouse/keyboard recording as recorded using:
 https://github.com/george-jensen/record-and-play-pynput
 """
+import logging
 import random
 from typing import Callable, Tuple
 
@@ -28,6 +29,9 @@ keyboard = KeyboardController()
 
 def play_recording(name_of_recording,
                    random_start=False, max_execute_sec: Tuple[int, int] = None,
+                   pause_after_sec: float = 3,
+                   should_pause= False,
+                   pause_time: float = 3,
                    stop_condition: Callable[[], bool] = lambda: False,
                    pause_condition: Callable[[], bool] = lambda: False):
     with open(name_of_recording) as json_file:
@@ -50,6 +54,9 @@ def play_recording(name_of_recording,
             return
         if rec_executed_time > to_execute_sec:
             return
+        if should_pause and rec_executed_time > pause_after_sec:
+            logging.info("Sleeping for %.3f seconds" % pause_time)
+            time.sleep(pause_time)
 
         action, _time = obj['action'], obj['_time']
         try:

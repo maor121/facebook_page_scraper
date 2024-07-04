@@ -124,9 +124,15 @@ class Facebook_scraper:
         time.sleep(start_in_sec)
 
         while not self.end_condition_reached:
+            pause_after_sec = random.uniform(0, 10)
+            should_pause = random.uniform(0, 1) < 0.5
+            pause_time = random.uniform(0, 10)
             play_recording(rec_json,
                            random_start=True,
-                           max_execute_sec=(15,20),
+                           max_execute_sec=(5, 20),
+                           pause_after_sec=pause_after_sec,
+                           should_pause=should_pause,
+                           pause_time=pause_time,
                            pause_condition=lambda: self.pause_condition_reached,
                            stop_condition=lambda: self.end_condition_reached)
 
@@ -184,6 +190,7 @@ class Facebook_scraper:
 
     def scrap_to_json(self):
         for post in self.scrap_generator():
+            self.pause_condition_reached = True
             pass
         return json.dumps(self.__data_dict, ensure_ascii=False, cls=DateTimeEncoder)
 
