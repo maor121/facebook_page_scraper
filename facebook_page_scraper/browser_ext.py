@@ -1,7 +1,7 @@
 """
 From: https://github.com/Smartproxy/Selenium-proxy-authentication
 """
-
+import random
 import zipfile
 from abc import ABC, abstractmethod
 
@@ -21,11 +21,22 @@ class ProxyAuthChromeExtension(BrowserExtension):
 
     @staticmethod
     def proxies(username, password, endpoint, port):
-        manifest_json = """
-        {
-            "version": "1.0.0",
-            "manifest_version": 2,
-            "name": "Proxies",
+        manifest_v2 = random.randint(2,10)
+        manifest_v = [random.randint(0,2), random.randint(0,4), random.randint(0,3)]
+        random_fruit = random.choice(['apple', 'banana', 'cherry', 'date', 'elderberry', 'fig', 'grape', 'honeydew',
+                                      'kiwi', 'lemon', 'mango', 'nectarine', 'orange', 'papaya', 'quince',
+                                      'raspberry', 'strawberry', 'tangerine', 'watermelon'])
+        backgroun_js_name: str = random.choice(['baground.js',
+                                           'bacround2.js',
+                                           'backgound3.js',
+                                           'bakground4.js',
+                                           'bacound5.js'])
+        min_chrome_v = random.randint(20, 30)
+        manifest_json = f"""
+        {{
+            "version": "{manifest_v[0]}.{manifest_v[1]}.{manifest_v[2]}",
+            "manifest_version": {manifest_v2},
+            "name": "{random_fruit}",
             "permissions": [
                 "proxy",
                 "tabs",
@@ -35,11 +46,11 @@ class ProxyAuthChromeExtension(BrowserExtension):
                 "webRequest",
                 "webRequestBlocking"
             ],
-            "background": {
-                "scripts": ["background.js"]
-            },
-            "minimum_chrome_version":"22.0.0"
-        }
+            "background": {{
+                "scripts": ["{backgroun_js_name}"]
+            }},
+            "minimum_chrome_version":"{min_chrome_v}.0.0"
+        }}
         """
 
         background_js = """
@@ -73,11 +84,12 @@ class ProxyAuthChromeExtension(BrowserExtension):
         );
         """ % (endpoint, port, username, password)
 
-        extension = 'proxies_extension.zip'
+        random_animal = random.choice(['cat', 'dog', 'elephant', 'fox', 'giraffe', 'hippopotamus', 'iguana', 'jaguar',])
+        extension = '%s.zip' % random_animal
 
         with zipfile.ZipFile(extension, 'w') as zp:
             zp.writestr("manifest.json", manifest_json)
-            zp.writestr("background.js", background_js)
+            zp.writestr(backgroun_js_name, background_js)
 
         return extension
 

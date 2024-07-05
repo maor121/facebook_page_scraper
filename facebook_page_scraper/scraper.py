@@ -83,7 +83,6 @@ class Facebook_scraper:
         self.password = password
         self.extensions = extensions
         self.scroll_recording_json = scroll_recording_json
-        assert any([isinstance(e, HttpStatusExtention) for e in extensions]) and browser == 'chrome'
         self.browser_args = browser_args
         self.browser_exp_options = browser_exp_options
         self.__data_dict = {}  # this dictionary stores all post's data
@@ -147,9 +146,6 @@ class Facebook_scraper:
             starting_time = time.time()
             # navigate to URL
             self.__driver.get(self.URL)
-            http_status_code = int(self.__driver.get_cookie("status-code")['value'])
-            if http_status_code != 200:
-                raise Exception(f"HTTP status code: {http_status_code}")
 
             # only login if username is provided
             self.username is not None and Finder._Finder__login(self.__driver, self.username, self.password)
