@@ -116,7 +116,11 @@ class Facebook_scraper:
         return (current_time-start_time) > self.timeout
 
     def scroll_down_job(self, rec_json):
-        self.__driver.fullscreen_window()
+        is_fullscreen = random.uniform(0, 1) < 0.5
+        if is_fullscreen:
+            self.__driver.fullscreen_window()
+        else:
+            self.__driver.driver.minimize_window()
 
         start_in_sec = random.uniform(3, 7)
         print("Start in %d seconds" % start_in_sec)
