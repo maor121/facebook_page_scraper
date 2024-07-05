@@ -21,7 +21,6 @@ class ProxyAuthChromeExtension(BrowserExtension):
 
     @staticmethod
     def proxies(username, password, endpoint, port):
-        manifest_v2 = random.randint(2,10)
         manifest_v = [random.randint(0,2), random.randint(0,4), random.randint(0,3)]
         random_fruit = random.choice(['apple', 'banana', 'cherry', 'date', 'elderberry', 'fig', 'grape', 'honeydew',
                                       'kiwi', 'lemon', 'mango', 'nectarine', 'orange', 'papaya', 'quince',
@@ -35,7 +34,7 @@ class ProxyAuthChromeExtension(BrowserExtension):
         manifest_json = f"""
         {{
             "version": "{manifest_v[0]}.{manifest_v[1]}.{manifest_v[2]}",
-            "manifest_version": {manifest_v2},
+            "manifest_version": 2,
             "name": "{random_fruit}",
             "permissions": [
                 "proxy",
