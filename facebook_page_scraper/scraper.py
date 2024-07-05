@@ -120,7 +120,7 @@ class Facebook_scraper:
         if is_fullscreen:
             self.__driver.fullscreen_window()
         else:
-            self.__driver.driver.maximize_window()
+            self.__driver.maximize_window()
 
         start_in_sec = random.uniform(3, 7)
         print("Start in %d seconds" % start_in_sec)
